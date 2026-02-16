@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
 class Task(models.Model):
-    # Варианты статусов (храним в базе 'new', показываем 'New')
     STATUS_CHOICES = [
         ('new', 'New'),
         ('in_progress', 'In Progress'),
@@ -11,7 +9,6 @@ class Task(models.Model):
         ('overdue', 'Overdue'),
     ]
 
-    # Варианты приоритета (1-5)
     PRIORITY_CHOICES = [
         (1, 'Low (1)'),
         (2, 'Medium-Low (2)'),
@@ -40,9 +37,9 @@ class Task(models.Model):
     deadline = models.DateTimeField(verbose_name="Дедлайн")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
 
+
     def __str__(self):
         return f"{self.title} ({self.get_status_display()})"
-
     class Meta:
         verbose_name = "Задача"
         verbose_name_plural = "Задачи"
