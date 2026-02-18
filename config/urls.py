@@ -17,13 +17,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from tasks.views import TaskViewSet
+from tasks.views import TaskViewSet, AnalyticsView
 
 router = DefaultRouter()
 router.register(r'tasks', TaskViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    
+    path('api/analytics/', AnalyticsView.as_view(), name='analytics'),
+
     path('api/', include(router.urls)),
 
     path('api-auth/', include('rest_framework.urls')),
