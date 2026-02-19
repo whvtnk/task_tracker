@@ -9,8 +9,9 @@ from django.db.models import Q, Count
 
 from rest_framework import viewsets, filters
 from .models import Task
+
 from .serializers import TaskSerializer 
-from .permissions import IsAdminOrOwner
+from .permissions import IsAdminOrOwner, IsSuperUser
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -32,7 +33,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     
 
 class AnalyticsView(APIView):
-    permissioon_classes = [IsAdminUser]
+    permission_classes = [IsSuperUser]
 
     def get(self, request):
         total_tasks = Task.objects.count()

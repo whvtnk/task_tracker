@@ -13,3 +13,9 @@ class IsAdminOrOwner(permissions.BasePermission):
             return True
         return False 
     
+class IsSuperUser(permissions.BasePermission):
+    """
+    Разрешает доступ ТОЛЬКО настоящим Руководителям (Суперпользователям).
+    """
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_superuser)
