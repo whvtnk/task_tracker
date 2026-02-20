@@ -14,8 +14,10 @@ class Task(models.Model):
         (2, 'Medium-Low (2)'),
         (3, 'Medium (3)'),
         (4, 'Medium-High (4)'),
-        (5, 'High (5)'),
+        (5, 'High (5)'),    
     ]
+
+    estimated_hours = models.IntegerField(verbose_name="Предполагаемые часы", default=0)
 
     title = models.CharField(max_length=200, verbose_name="Название")
     description = models.TextField(verbose_name="Описание", blank=True)
