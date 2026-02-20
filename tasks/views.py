@@ -16,8 +16,7 @@ from .permissions import IsAdminOrOwner, IsSuperUser
 
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all().order_by('-created_at')
-    serializer_class = TaskSerializer
-
+    serializer_class = TaskSerializer   
     permission_classes = [IsAdminOrOwner]
 
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
