@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .form-container {
+        background: white; width: 500px; border-radius: 8px; 
+        box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3); padding: 30px; margin-top: 20px;
+    }
+    h2 { color: #202124; font-size: 22px; margin-top: 0; margin-bottom: 20px; text-align: center; }
+    
+    /* Стилизуем поля формы, которые Джанго сгенерирует */
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; color: #5f6368; font-size: 14px; font-weight: 500;}
+    .form-control { 
+        width: 100%; padding: 10px; border: 1px solid #dadce0; 
+        border-radius: 4px; box-sizing: border-box; font-size: 14px; font-family: inherit;
+    }
+    .form-control:focus { border-color: #1a73e8; outline: none;}
+    
+    .btn-submit { 
+        background-color: #1a73e8; color: white; border: none; padding: 10px 20px; 
+        font-size: 14px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;
+    }
+    .btn-submit:hover { background-color: #1557b0; }
+    .btn-cancel {
+        display: block; text-align: center; margin-top: 15px; color: #5f6368; 
+        text-decoration: none; font-size: 14px; font-weight: 500;
+    }
+    .btn-cancel:hover { color: #202124; }
+</style>
+
+<div class="form-container">
+    <h2>Создать новую задачу</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <div class="form-group">
+                <label>{{ field.label }}</label>
+                {{ field }}
+                <span style="color: #d93025; font-size: 12px;">{{ field.errors }}</span>
+            </div>
+        {% endfor %}
+        
+        <button type="submit" class="btn-submit">Создать задачу</button>
+        <a href="{% url 'task_board' %}" class="btn-cancel">Отмена</a>
+    </form>
+</div>
+{% endblock %}

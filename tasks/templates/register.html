@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация - Task Tracker</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f3f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .login-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); width: 350px; }
+        h2 { margin-top: 0; color: #202124; font-size: 24px; font-weight: 500; margin-bottom: 20px; text-align: center; }
+        
+        /* Стилизуем встроенную форму Джанго */
+        .helptext { font-size: 11px; color: #5f6368; display: block; margin-bottom: 10px; }
+        ul.errorlist { color: #d93025; font-size: 13px; padding-left: 20px; }
+        p { margin-bottom: 15px; color: #5f6368; font-size: 14px; }
+        input[type="text"], input[type="password"] { 
+            width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box; font-size: 16px; outline: none; margin-top: 5px;
+        }
+        input[type="text"]:focus, input[type="password"]:focus { border-color: #1a73e8; }
+        
+        .btn-login { background-color: #1a73e8; color: white; border: none; padding: 10px 24px; font-size: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
+        .btn-login:hover { background-color: #1557b0; }
+        .links { text-align: center; margin-top: 20px; font-size: 14px; }
+        .links a { color: #1a73e8; text-decoration: none; font-weight: 500; }
+        .links a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <h2>Создать аккаунт</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }} <button type="submit" class="btn-login">Зарегистрироваться</button>
+        </form>
+
+        <div class="links">
+            Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
+        </div>
+    </div>
+
+</body>
+</html>

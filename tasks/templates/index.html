@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .task-board { background: white; width: 600px; border-radius: 8px; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3); padding: 20px; }
+    h2 { color: #202124; font-size: 22px; margin-bottom: 20px; text-align: center; }
+    .task-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #e0e0e0; }
+    .task-item:last-child { border-bottom: none; }
+    .task-title { flex-grow: 1; font-size: 15px; color: #202124; }
+    
+    /* Стили для выпадающего списка статусов */
+    .status-select { 
+        padding: 4px 8px; border-radius: 4px; border: 1px solid #dadce0; 
+        font-size: 13px; font-weight: 500; outline: none; margin-right: 15px; cursor: pointer;
+    }
+    .status-select:focus { border-color: #1a73e8; }
+    
+    .completed-text { text-decoration: line-through; color: #80868b; }
+    .badge-priority { font-size: 11px; padding: 3px 6px; border-radius: 4px; background: #f1f3f4; color: #5f6368; margin-left: 10px; font-weight: normal; }
+</style>
+
+<div class="task-board">
+    <h2>Мои задачи</h2>
+
+    {% if request.user.is_superuser %}
+    <div style="text-align: center; margin-bottom: 20px;">
+        <a href="{% url 'create_task' %}" style="background: #1a73e8; color: white; text-decoration: none; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: bold;">+ Создать задачу</a>
+    </div>
+    {% endif %}
+
+    <form method="GET" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; border: 1px solid #e0e0e0;">
+        
+        <select name="status" style="padding: 6px; border-radius: 4px; border: 1px solid #dadce0; font-size: 13px;">
+            <option value="">Все статусы</option>
+            <option value="new" {% if current_status == 'new' %}selected{% endif %}>New</option>
+            <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="review" {% if current_status == 'review' %}selected{% endif %}>Review</option>
+            <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Completed</option>
+            <option value="overdue" {% if current_status == 'overdue' %}selected{% endif %}>Overdue</option>
+        </select>
+
+        {% if request.user.is_superuser %}
+        <select name="assignee" style="padding: 6px; border-radius: 4px; border: 1px solid #dadce0; font-size: 13px;">
+            <option value="">Все сотрудники</option>
+            {% for u in users %}
+                <option value="{{ u.id }}" {% if current_assignee == u.id|stringformat:"s" %}selected{% endif %}>{{ u.username }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+
+        <select name="sort" style="padding: 6px; border-radius: 4px; border: 1px solid #dadce0; font-size: 13px;">
+            <option value="">Без сортировки</option>
+            <option value="deadline_asc" {% if current_sort == 'deadline_asc' %}selected{% endif %}>По дедлайну (Сначала срочные)</option>
+            <option value="priority_desc" {% if current_sort == 'priority_desc' %}selected{% endif %}>По приоритету (Сначала высокие)</option>
+        </select>
+
+        <button type="submit" style="background: #1a73e8; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;">Применить</button>
+        <a href="{% url 'task_board' %}" style="text-decoration: none; color: #5f6368; font-size: 13px; margin-left: 5px;">Сбросить</a>
+    </form>
+
+    {% for task in tasks %}
+        <div class="task-item">
+            
+            <select class="status-select" data-id="{{ task.id }}">
+                <option value="new" {% if task.status == 'new' %}selected{% endif %}>New</option>
+                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                <option value="review" {% if task.status == 'review' %}selected{% endif %}>Review</option>
+                <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+                {% if task.status == 'overdue' %}
+                    <option value="overdue" selected disabled>Overdue ⚠️</option>
+                {% endif %}
+            </select>
+            
+            <span class="task-title {% if task.status == 'completed' %}completed-text{% endif %}">
+                {{ task.title }} 
+                
+                <span class="badge-priority">Приоритет: {{ task.priority }}</span>
+
+                {% if task.deadline %}
+                    <span style="font-size: 11px; color: #5f6368; margin-left: 10px; background: #f1f3f4; padding: 3px 6px; border-radius: 4px;">
+                        📅 До: {{ task.deadline|date:"d.m.Y H:i" }}
+                    </span>
+                {% endif %}
+
+                {% if request.user.is_superuser %}
+                    <span style="color: #1a73e8; font-size: 12px; margin-left: 10px;">
+                        (👤 {% if task.assignee %}{{ task.assignee.username }}{% else %}Без исполнителя{% endif %})
+                    </span>
+                {% endif %}
+            </span>
+
+            {% if request.user.is_superuser %}
+                <div style="margin-left: 15px;">
+                    <a href="{% url 'edit_task' task.id %}" style="text-decoration: none; font-size: 14px; margin-right: 10px;" title="Редактировать">✏️</a>
+                    <a href="{% url 'delete_task' task.id %}" style="text-decoration: none; font-size: 14px;" title="Удалить" onclick="return confirm('Точно удалить задачу?');">🗑️</a>
+                </div>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p style="text-align: center; color: #5f6368;">Все задачи выполнены! Отличная работа 🎉</p>
+    {% endfor %}
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const taskId = this.getAttribute('data-id');
+            const newStatus = this.value; // Берем выбранный статус из списка
+
+            fetch(`/api/tasks/${taskId}/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(response => {
+                if(response.ok) { 
+                    window.location.reload(); // Перезагружаем страницу для обновления стилей
+                } else { 
+                    alert('Ошибка при сохранении статуса.'); 
+                    window.location.reload(); // Возвращаем как было при ошибке
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

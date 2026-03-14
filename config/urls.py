@@ -18,6 +18,9 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from tasks.views import TaskViewSet, AnalyticsView
+from django.contrib.auth import views as auth_views
+
+from tasks import views
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -34,5 +37,24 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
 
     path('api/token/' , TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    
     path('api/token/refresh/' , TokenRefreshView.as_view(), name='token_refresh'),
+    
+    path('board/', views.task_board, name='task_board'),
+    
+    path('logout/', views.custom_logout, name='logout'),
+
+    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+    
+    path('register/', views.register, name='register'),
+    
+    path('board/', views.task_board, name='task_board'),
+
+    path('create-task/', views.create_task, name='create_task'),
+
+    path('analytics-board/', views.analytics_board, name='analytics'),
+
+    path('task/<int:task_id>/delete/', views.delete_task, name='delete_task'),
+
+    path('task/<int:task_id>/edit/', views.edit_task, name='edit_task'),
 ]

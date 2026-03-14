@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .dashboard-container { width: 850px; margin: 0 auto; padding-bottom: 50px; }
+    h2 { color: #202124; font-size: 24px; margin-bottom: 25px; }
+    
+    /* Сетка для 4 карточек сверху */
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+    .metric-card { 
+        background: white; padding: 20px; border-radius: 8px; 
+        box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3); text-align: center; 
+    }
+    .metric-value { font-size: 32px; font-weight: bold; margin-bottom: 5px; }
+    .metric-label { font-size: 12px; color: #5f6368; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
+    
+    /* Цвета для цифр */
+    .val-blue { color: #1a73e8; }
+    .val-green { color: #1e8e3e; }
+    .val-red { color: #d93025; }
+    .val-orange { color: #f29900; }
+
+    /* Таблица сотрудников */
+    .stats-table { 
+        width: 100%; background: white; border-radius: 8px; 
+        box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3); border-collapse: collapse; overflow: hidden; 
+    }
+    .stats-table th { background: #f8f9fa; padding: 15px; text-align: left; font-size: 14px; color: #5f6368; border-bottom: 1px solid #dadce0; }
+    .stats-table td { padding: 15px; border-bottom: 1px solid #dadce0; font-size: 15px; color: #202124; }
+    .stats-table tr:last-child td { border-bottom: none; }
+    .stats-table tr:hover { background-color: #f8f9fa; }
+</style>
+
+<div class="dashboard-container">
+    <h2>Аналитика проекта</h2>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-value val-blue">{{ total_tasks }}</div>
+            <div class="metric-label">Всего задач</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value val-green">{{ completed_tasks }}</div>
+            <div class="metric-label">Выполнено</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value val-red">{{ overdue_tasks }}</div>
+            <div class="metric-label">Просрочено</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value val-orange">{{ completion_rate }}%</div>
+            <div class="metric-label">Процент успеха</div>
+        </div>
+    </div>
+
+    <h2>Статистика сотрудников</h2>
+    <table class="stats-table">
+        <thead>
+            <tr>
+                <th>Сотрудник</th>
+                <th>Назначено задач</th>
+                <th>Успешно закрыто</th>
+                <th>Просрочено</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="background-color: #fff8e1;">
+                <td style="font-weight: bold; color: #f29900;">⚠️ Без исполнителя</td>
+                <td>{{ unassigned_total }}</td>
+                <td><span style="color: #1e8e3e; font-weight: bold;">{{ unassigned_completed }}</span></td>
+                <td><span style="color: #d93025; font-weight: bold;">{{ unassigned_overdue }}</span></td>
+            </tr>
+
+            {% for stat in employee_stats %}
+            <tr>
+                <td style="font-weight: bold; color: #1a73e8;">{{ stat.username }}</td>
+                <td>{{ stat.total_assigned }}</td>
+                <td><span style="color: #1e8e3e; font-weight: bold;">{{ stat.completed }}</span></td>
+                <td><span style="color: #d93025; font-weight: bold;">{{ stat.overdue }}</span></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #5f6368;">Сотрудников пока нет</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+    </table>
+</div>
+{% endblock %}
