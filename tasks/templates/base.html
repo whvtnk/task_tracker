@@ -5,77 +5,197 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#6366f1',
-                        'primary-dark': '#4f46e5',
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
-        .glass { backdrop-filter: blur(10px); background: rgba(255,255,255,0.8); }
-        .task-card { transition: all 0.2s ease; }
-        .task-card:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.15); }
+        body { background: #0a0a0f; }
+
+        /* Градиент за курсором */
+        .cursor-glow {
+            pointer-events: none;
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            transition: left 0.1s ease, top 0.1s ease;
+            z-index: 0;
+        }
+
+        /* Стеклянная навигация */
+        .glass-nav {
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* Floating menu */
+        .fab-menu { position: fixed; bottom: 32px; right: 32px; z-index: 100; }
+        .fab-btn {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: rgba(99,102,241,0.9);
+            border: 1px solid rgba(99,102,241,0.5);
+            box-shadow: 0 0 20px rgba(99,102,241,0.4);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s ease;
+            color: white; font-size: 20px; font-weight: 300;
+        }
+        .fab-btn:hover { background: rgba(99,102,241,1); box-shadow: 0 0 30px rgba(99,102,241,0.6); }
+        .fab-btn .icon { transition: transform 0.3s ease; display: inline-block; }
+        .fab-btn.open .icon { transform: rotate(45deg); }
+
+        .fab-options {
+            position: absolute; bottom: 60px; right: 0;
+            display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+            opacity: 0; transform: translateY(10px) scale(0.95);
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .fab-options.open {
+            opacity: 1; transform: translateY(0) scale(1);
+            pointer-events: all;
+        }
+        .fab-option-btn {
+            display: flex; align-items: center; gap: 8px; padding: 8px 16px;
+            background: rgba(17,17,17,0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            color: white; font-size: 13px; font-weight: 500;
+            cursor: pointer; text-decoration: none; white-space: nowrap;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .fab-option-btn:hover {
+            background: rgba(99,102,241,0.2);
+            border-color: rgba(99,102,241,0.4);
+            box-shadow: 0 4px 20px rgba(99,102,241,0.2);
+            color: white;
+        }
+        .fab-option-btn.danger:hover {
+            background: rgba(239,68,68,0.2);
+            border-color: rgba(239,68,68,0.4);
+        }
+
+        /* Анимация появления опций */
+        .fab-option-wrap {
+            opacity: 0; transform: translateX(16px);
+            transition: all 0.25s ease;
+        }
+        .fab-options.open .fab-option-wrap:nth-child(1) { opacity:1; transform:translateX(0); transition-delay: 0.05s; }
+        .fab-options.open .fab-option-wrap:nth-child(2) { opacity:1; transform:translateX(0); transition-delay: 0.1s; }
+        .fab-options.open .fab-option-wrap:nth-child(3) { opacity:1; transform:translateX(0); transition-delay: 0.15s; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="min-h-screen text-slate-100 relative overflow-x-hidden">
+
+    <!-- Градиент за курсором -->
+    <div class="cursor-glow" id="cursorGlow"></div>
 
     <!-- Navbar -->
-    <nav class="glass border-b border-slate-200 sticky top-0 z-50">
+    <nav class="glass-nav sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            
-            <!-- Logo -->
-            <a href="{% url 'task_board' %}" class="flex items-center gap-2 text-xl font-bold text-indigo-600 hover:text-indigo-700 transition-colors no-underline">
-                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <a href="{% url 'task_board' %}" class="flex items-center gap-2 no-underline" style="text-decoration:none;">
+                <div style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                    <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                Task Tracker
+                <span style="font-size:17px;font-weight:700;background:linear-gradient(135deg,#a5b4fc,#c4b5fd);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Task Tracker</span>
             </a>
 
-            <!-- Nav Links -->
-            <div class="flex items-center gap-2">
-                <a href="{% url 'task_board' %}" 
-                   class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 transition-all no-underline">
+            <div class="flex items-center gap-1">
+                <a href="{% url 'task_board' %}" style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;transition:all 0.2s;"
+                   onmouseover="this.style.background='rgba(255,255,255,0.06)';this.style.color='white'"
+                   onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.6)'">
                     Моя доска
                 </a>
-
                 {% if request.user.is_superuser %}
-                <a href="{% url 'analytics' %}" 
-                   class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 transition-all no-underline">
+                <a href="{% url 'analytics' %}" style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;transition:all 0.2s;"
+                   onmouseover="this.style.background='rgba(255,255,255,0.06)';this.style.color='white'"
+                   onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.6)'">
                     Аналитика
                 </a>
                 {% endif %}
 
-                <!-- User Badge -->
-                <div class="flex items-center gap-2 ml-2 px-4 py-2 bg-indigo-50 rounded-full">
-                    <div class="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
-                        <span class="text-white text-xs font-bold">{{ request.user.username|first|upper }}</span>
+                <!-- Аватар пользователя -->
+                <div style="display:flex;align-items:center;gap:8px;margin-left:8px;padding:6px 12px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:24px;">
+                    <div style="width:24px;height:24px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;">
+                        {{ request.user.username|first|upper }}
                     </div>
-                    <span class="text-sm font-semibold text-indigo-700">{{ request.user.username }}</span>
+                    <span style="font-size:13px;font-weight:600;color:#a5b4fc;">{{ request.user.username }}</span>
                 </div>
-
-                <a href="{% url 'logout' %}" 
-                   class="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all no-underline">
-                    Выйти
-                </a>
             </div>
         </div>
     </nav>
 
-    <!-- Page Content -->
-    <main class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Основной контент -->
+    <main class="max-w-7xl mx-auto px-6 py-8 relative z-10">
         {% block content %}
         {% endblock %}
     </main>
 
+    <!-- Floating Action Menu -->
+    <div class="fab-menu">
+        <div class="fab-options" id="fabOptions">
+            {% if request.user.is_superuser %}
+            <div class="fab-option-wrap">
+                <a href="{% url 'create_task' %}" class="fab-option-btn">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Создать задачу
+                </a>
+            </div>
+            <div class="fab-option-wrap">
+                <a href="{% url 'analytics' %}" class="fab-option-btn">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    Аналитика
+                </a>
+            </div>
+            {% endif %}
+            <div class="fab-option-wrap">
+                <a href="{% url 'logout' %}" class="fab-option-btn danger">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    Выйти
+                </a>
+            </div>
+        </div>
+        <button class="fab-btn" id="fabBtn" onclick="toggleFab()">
+            <span class="icon">+</span>
+        </button>
+    </div>
+
+    <script>
+        // Градиент за курсором
+        const glow = document.getElementById('cursorGlow');
+        document.addEventListener('mousemove', (e) => {
+            glow.style.left = e.clientX + 'px';
+            glow.style.top = e.clientY + 'px';
+        });
+
+        // Floating menu
+        function toggleFab() {
+            const btn = document.getElementById('fabBtn');
+            const opts = document.getElementById('fabOptions');
+            btn.classList.toggle('open');
+            opts.classList.toggle('open');
+        }
+
+        // Закрыть при клике вне
+        document.addEventListener('click', (e) => {
+            const fab = document.querySelector('.fab-menu');
+            if (!fab.contains(e.target)) {
+                document.getElementById('fabBtn').classList.remove('open');
+                document.getElementById('fabOptions').classList.remove('open');
+            }
+        });
+    </script>
 </body>
 </html>

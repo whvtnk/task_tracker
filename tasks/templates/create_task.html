@@ -1,50 +1,62 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<style>
-    .form-container {
-        background: white; width: 500px; border-radius: 8px; 
-        box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3); padding: 30px; margin-top: 20px;
-    }
-    h2 { color: #202124; font-size: 22px; margin-top: 0; margin-bottom: 20px; text-align: center; }
-    
-    /* Стилизуем поля формы, которые Джанго сгенерирует */
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; color: #5f6368; font-size: 14px; font-weight: 500;}
-    .form-control { 
-        width: 100%; padding: 10px; border: 1px solid #dadce0; 
-        border-radius: 4px; box-sizing: border-box; font-size: 14px; font-family: inherit;
-    }
-    .form-control:focus { border-color: #1a73e8; outline: none;}
-    
-    .btn-submit { 
-        background-color: #1a73e8; color: white; border: none; padding: 10px 20px; 
-        font-size: 14px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;
-    }
-    .btn-submit:hover { background-color: #1557b0; }
-    .btn-cancel {
-        display: block; text-align: center; margin-top: 15px; color: #5f6368; 
-        text-decoration: none; font-size: 14px; font-weight: 500;
-    }
-    .btn-cancel:hover { color: #202124; }
-</style>
 
-<div class="form-container">
-    <h2>Создать новую задачу</h2>
-    
-    <form method="post">
-        {% csrf_token %}
-        
-        {% for field in form %}
-            <div class="form-group">
-                <label>{{ field.label }}</label>
+<div style="max-width:560px;margin:0 auto;">
+    <div style="margin-bottom:24px;">
+        <h1 style="font-size:22px;font-weight:700;color:white;margin:0 0 4px;">
+            {% if edit_mode %}Редактировать задачу{% else %}Создать задачу{% endif %}
+        </h1>
+        <p style="color:rgba(255,255,255,0.35);font-size:13px;margin:0;">
+            {% if edit_mode %}Измените поля задачи{% else %}Заполните форму для новой задачи{% endif %}
+        </p>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:32px;">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">
+                    {{ field.label }}
+                </label>
+
+                <!-- Переопределяем стили через JavaScript ниже -->
                 {{ field }}
-                <span style="color: #d93025; font-size: 12px;">{{ field.errors }}</span>
+
+                {% if field.errors %}
+                <p style="color:#fca5a5;font-size:12px;margin:4px 0 0;">{{ field.errors|join:", " }}</p>
+                {% endif %}
             </div>
-        {% endfor %}
-        
-        <button type="submit" class="btn-submit">Создать задачу</button>
-        <a href="{% url 'task_board' %}" class="btn-cancel">Отмена</a>
-    </form>
+            {% endfor %}
+
+            <div style="display:flex;gap:12px;margin-top:8px;">
+                <button type="submit" style="flex:1;padding:13px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 0 20px rgba(99,102,241,0.3);">
+                    {% if edit_mode %}Сохранить изменения{% else %}Создать задачу{% endif %}
+                </button>
+                <a href="{% url 'task_board' %}" style="padding:13px 20px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);border-radius:10px;font-size:14px;font-weight:500;text-decoration:none;display:flex;align-items:center;border:1px solid rgba(255,255,255,0.08);">
+                    Отмена
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
+
+<style>
+    /* Стилизуем поля формы Django в тёмном стиле */
+    .form-control, select.form-control, input.form-control, textarea.form-control {
+        background: rgba(255,255,255,0.05) !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        border-radius: 10px !important;
+        padding: 11px 14px !important;
+        color: white !important;
+        font-size: 14px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        outline: none !important;
+        font-family: 'Inter', sans-serif !important;
+        transition: border-color 0.2s !important;
+    }
+    .form-control:focus { border-color: rgba(99,102,241,0.5) !important; }
+    select.form-control option { background: #1a1a2e; color: white; }
+</style>
 {% endblock %}
