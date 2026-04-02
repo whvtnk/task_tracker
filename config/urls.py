@@ -20,6 +20,8 @@ from rest_framework.routers import DefaultRouter
 from tasks.views import TaskViewSet, AnalyticsView
 from django.contrib.auth import views as auth_views
 
+from django.views.generic import RedirectView
+
 from tasks import views
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -28,6 +30,8 @@ router = DefaultRouter()
 router.register(r'tasks', TaskViewSet)
 
 urlpatterns = [
+    path('', RedirectView.as_view(pattern_name='task_board'), name='home'),
+    
     path('admin/', admin.site.urls),
     
     path('api/analytics/', AnalyticsView.as_view(), name='analytics'),
@@ -39,8 +43,6 @@ urlpatterns = [
     path('api/token/' , TokenObtainPairView.as_view(), name='token_obtain_pair'),
     
     path('api/token/refresh/' , TokenRefreshView.as_view(), name='token_refresh'),
-    
-    path('board/', views.task_board, name='task_board'),
     
     path('logout/', views.custom_logout, name='logout'),
 

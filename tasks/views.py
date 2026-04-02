@@ -145,7 +145,7 @@ def create_task(request):
     else:
         form = TaskForm()
     
-    return render(request, 'create_task.html', {'form': form})
+    return render(request, 'create_task.html', {'form': form})  
 
 @login_required
 def analytics_board(request):
@@ -207,3 +207,32 @@ def edit_task(request, task_id):
         form = TaskForm(instance=task)
         
     return render(request, 'create_task.html', {'form': form, 'edit_mode': True})
+
+
+'''
+вот это фронт моего сайта в данный момент и мне учительница сказала исправить типа 
+
+улучшить вид сайта так как стиль сайта не устраивает и вот теперь 
+
+для этого я собирался использовать  Agent Templates | 21st | 21st 
+
+но у него оказалось платн подписка вроде того и теперь если я дам тебе промпты или сам компонент ты можешь мне создать такие красивые сайты 
+
+и еще изначально в пример нам поставили TasksBoard | Desktop app for Google Tasks   этот сайт  
+
+теперь я бы хотел улучшить саит до совершенства  
+
+посмотрев наш примерный саит я осознал что мне надо улучшить не только стиль и сам бэкенды и тд 
+
+
+
+вот в пример промптов которых я бы использовал 
+
+
+
+и вот еще мне написать это все в режим code 
+
+
+
+
+'''
