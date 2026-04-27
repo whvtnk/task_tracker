@@ -2,104 +2,42 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GoFlow — Регистрация</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>Регистрация - Task Tracker</title>
     <style>
-        * { font-family: 'Nunito', sans-serif; box-sizing: border-box; }
-        body { background: #fdf8f3; margin: 0; min-height: 100vh; display: flex; }
-        .cursor-glow { pointer-events: none; position: fixed; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(249,115,22,0.07) 0%, transparent 70%); transform: translate(-50%,-50%); transition: left 0.12s, top 0.12s; z-index: 0; }
-
-        .left-panel {
-            width: 320px; background: #1a0e06;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            padding: 48px; flex-shrink: 0;
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f3f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .login-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); width: 350px; }
+        h2 { margin-top: 0; color: #202124; font-size: 24px; font-weight: 500; margin-bottom: 20px; text-align: center; }
+        
+        /* Стилизуем встроенную форму Джанго */
+        .helptext { font-size: 11px; color: #5f6368; display: block; margin-bottom: 10px; }
+        ul.errorlist { color: #d93025; font-size: 13px; padding-left: 20px; }
+        p { margin-bottom: 15px; color: #5f6368; font-size: 14px; }
+        input[type="text"], input[type="password"] { 
+            width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box; font-size: 16px; outline: none; margin-top: 5px;
         }
-        .brand-icon {
-            width: 56px; height: 56px;
-            background: linear-gradient(135deg,#f97316,#fbbf24);
-            border-radius: 16px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 28px; margin-bottom: 16px;
-        }
-        .brand-name { font-size: 28px; font-weight: 800; background: linear-gradient(135deg,#fb923c,#fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .brand-desc { color: rgba(255,255,255,0.3); font-size: 12px; font-weight: 600; margin-top: 8px; text-align: center; line-height: 1.6; }
-
-        .right-panel {
-            flex: 1; display: flex; align-items: center;
-            justify-content: center; padding: 40px;
-            position: relative; z-index: 10; overflow-y: auto;
-        }
-        .reg-box { width: 100%; max-width: 400px; }
-        .reg-title { font-size: 22px; font-weight: 800; color: #1a0e06; margin-bottom: 4px; }
-        .reg-sub { font-size: 13px; color: #92400e; margin-bottom: 24px; }
-
-        /* Django form fields */
-        .helptext { font-size: 11px; color: #a16207; display: block; margin-top: 4px; line-height: 1.5; }
-        ul.errorlist { list-style: none; padding: 0; margin: 4px 0 0; }
-        ul.errorlist li { color: #dc2626; font-size: 12px; font-weight: 600; }
-
-        p { margin-bottom: 16px; }
-        p label { display: block; font-size: 11px; font-weight: 700; color: #c2410c; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
-
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 11px 16px;
-            background: white;
-            border: 1.5px solid rgba(249,115,22,0.2);
-            border-radius: 10px;
-            color: #1a0e06;
-            font-size: 14px; font-weight: 600;
-            outline: none;
-            transition: border-color 0.2s;
-            font-family: 'Nunito', sans-serif;
-        }
-        input[type="text"]:focus, input[type="password"]:focus {
-            border-color: #f97316;
-        }
-        input::placeholder { color: #d97706; opacity: 0.4; }
-
-        .btn-register {
-            width: 100%; padding: 13px;
-            background: linear-gradient(135deg,#f97316,#fbbf24);
-            color: white; border: none; border-radius: 10px;
-            font-size: 15px; font-weight: 800; cursor: pointer;
-            margin-top: 8px; font-family: 'Nunito', sans-serif;
-        }
-        .btn-register:hover { opacity: 0.95; }
+        input[type="text"]:focus, input[type="password"]:focus { border-color: #1a73e8; }
+        
+        .btn-login { background-color: #1a73e8; color: white; border: none; padding: 10px 24px; font-size: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
+        .btn-login:hover { background-color: #1557b0; }
+        .links { text-align: center; margin-top: 20px; font-size: 14px; }
+        .links a { color: #1a73e8; text-decoration: none; font-weight: 500; }
+        .links a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <div class="cursor-glow" id="cg"></div>
 
-    <div class="left-panel">
-        <div class="brand-icon">◈</div>
-        <div class="brand-name">GoFlow</div>
-        <div class="brand-desc">Создай аккаунт<br>и начни работать</div>
-    </div>
+    <div class="login-card">
+        <h2>Создать аккаунт</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }} <button type="submit" class="btn-login">Зарегистрироваться</button>
+        </form>
 
-    <div class="right-panel">
-        <div class="reg-box">
-            <div class="reg-title">Создать аккаунт</div>
-            <div class="reg-sub">Заполните форму ниже</div>
-
-            <form method="post">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn-register">Зарегистрироваться →</button>
-            </form>
-
-            <p style="text-align:center;margin-top:20px;font-size:13px;color:#92400e;margin-bottom:0;">
-                Уже есть аккаунт?
-                <a href="{% url 'login' %}" style="color:#f97316;font-weight:800;text-decoration:none;">Войти</a>
-            </p>
+        <div class="links">
+            Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
         </div>
     </div>
 
-    <script>
-        const cg = document.getElementById('cg');
-        document.addEventListener('mousemove', e => { cg.style.left = e.clientX+'px'; cg.style.top = e.clientY+'px'; });
-    </script>
 </body>
 </html>

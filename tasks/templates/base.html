@@ -3,171 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GoFlow</title>
+    <title>Task Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'Nunito', sans-serif; }
-        body { background: #fdf8f3; margin: 0; }
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #0a0a0f; }
 
+        /* Градиент за курсором */
         .cursor-glow {
             pointer-events: none;
             position: fixed;
-            width: 500px; height: 500px;
+            width: 600px;
+            height: 600px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(249,115,22,0.07) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
             transform: translate(-50%, -50%);
-            transition: left 0.12s ease, top 0.12s ease;
+            transition: left 0.1s ease, top 0.1s ease;
             z-index: 0;
         }
 
-        /* Sidebar */
-        .sidebar {
-            position: fixed; left: 0; top: 0; bottom: 0;
-            width: 220px;
-            background: #1a0e06;
-            border-right: 1px solid rgba(249,115,22,0.15);
-            z-index: 50;
-            display: flex; flex-direction: column;
+        /* Стеклянная навигация */
+        .glass-nav {
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
         }
-        .sidebar-logo {
-            padding: 24px 20px 20px;
-            border-bottom: 1px solid rgba(249,115,22,0.1);
-        }
-        .logo-name {
-            font-size: 22px; font-weight: 800;
-            background: linear-gradient(135deg,#fb923c,#fbbf24);
-            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .logo-sub { font-size: 11px; color: rgba(255,255,255,0.25); font-weight: 600; margin-top: 2px; }
 
-        .sidebar-nav { padding: 16px 12px; flex: 1; }
-        .nav-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px 12px; border-radius: 12px;
-            font-size: 13px; font-weight: 600;
-            color: rgba(255,255,255,0.45);
-            text-decoration: none; margin-bottom: 4px;
-            transition: all 0.2s;
-        }
-        .nav-item:hover { background: rgba(249,115,22,0.1); color: #fb923c; }
-        .nav-item.active { background: rgba(249,115,22,0.15); color: #fb923c; }
-        .nav-icon { font-size: 16px; width: 20px; text-align: center; }
-
-        .sidebar-user {
-            padding: 16px;
-            border-top: 1px solid rgba(249,115,22,0.1);
-        }
-        .user-card {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px 12px;
-            background: rgba(249,115,22,0.08);
-            border: 1px solid rgba(249,115,22,0.15);
-            border-radius: 12px;
-        }
-        .user-avatar {
-            width: 32px; height: 32px;
-            background: linear-gradient(135deg,#f97316,#fbbf24);
-            border-radius: 10px;
+        /* Floating menu */
+        .fab-menu { position: fixed; bottom: 32px; right: 32px; z-index: 100; }
+        .fab-btn {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: rgba(99,102,241,0.9);
+            border: 1px solid rgba(99,102,241,0.5);
+            box-shadow: 0 0 20px rgba(99,102,241,0.4);
             display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 800; color: white;
+            cursor: pointer; transition: all 0.3s ease;
+            color: white; font-size: 20px; font-weight: 300;
         }
-        .user-info { flex: 1; min-width: 0; }
-        .user-name { font-size: 12px; font-weight: 700; color: #fb923c; }
-        .user-role { font-size: 10px; color: rgba(255,255,255,0.25); }
-        .logout-btn {
-            font-size: 11px; color: rgba(255,255,255,0.2);
-            text-decoration: none; transition: color 0.2s;
+        .fab-btn:hover { background: rgba(99,102,241,1); box-shadow: 0 0 30px rgba(99,102,241,0.6); }
+        .fab-btn .icon { transition: transform 0.3s ease; display: inline-block; }
+        .fab-btn.open .icon { transform: rotate(45deg); }
+
+        .fab-options {
+            position: absolute; bottom: 60px; right: 0;
+            display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+            opacity: 0; transform: translateY(10px) scale(0.95);
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .logout-btn:hover { color: #fb7185; }
-
-        /* Main content */
-        .main { margin-left: 220px; min-height: 100vh; position: relative; z-index: 10; }
-
-        /* Top bar */
-        .topbar {
-            background: rgba(253,248,243,0.9);
+        .fab-options.open {
+            opacity: 1; transform: translateY(0) scale(1);
+            pointer-events: all;
+        }
+        .fab-option-btn {
+            display: flex; align-items: center; gap: 8px; padding: 8px 16px;
+            background: rgba(17,17,17,0.85);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(249,115,22,0.1);
-            padding: 14px 28px;
-            display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 40;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            color: white; font-size: 13px; font-weight: 500;
+            cursor: pointer; text-decoration: none; white-space: nowrap;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: flex; align-items: center; gap: 8px;
         }
-        .topbar-title { font-size: 18px; font-weight: 800; color: #1a0e06; }
-        .topbar-actions { display: flex; gap: 8px; align-items: center; }
-
-        .btn-primary {
-            padding: 8px 18px;
-            background: linear-gradient(135deg,#f97316,#fbbf24);
-            color: white; border: none; border-radius: 10px;
-            font-size: 13px; font-weight: 700;
-            cursor: pointer; transition: all 0.2s;
-            text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+        .fab-option-btn:hover {
+            background: rgba(99,102,241,0.2);
+            border-color: rgba(99,102,241,0.4);
+            box-shadow: 0 4px 20px rgba(99,102,241,0.2);
+            color: white;
         }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(249,115,22,0.3); }
-
-        .btn-secondary {
-            padding: 8px 16px;
-            background: white; color: #78350f;
-            border: 1px solid rgba(249,115,22,0.25);
-            border-radius: 10px; font-size: 13px; font-weight: 700;
-            cursor: pointer; transition: all 0.2s;
-            text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+        .fab-option-btn.danger:hover {
+            background: rgba(239,68,68,0.2);
+            border-color: rgba(239,68,68,0.4);
         }
-        .btn-secondary:hover { background: #fff7ed; border-color: rgba(249,115,22,0.5); }
 
-        .page-content { padding: 24px 28px; }
+        /* Анимация появления опций */
+        .fab-option-wrap {
+            opacity: 0; transform: translateX(16px);
+            transition: all 0.25s ease;
+        }
+        .fab-options.open .fab-option-wrap:nth-child(1) { opacity:1; transform:translateX(0); transition-delay: 0.05s; }
+        .fab-options.open .fab-option-wrap:nth-child(2) { opacity:1; transform:translateX(0); transition-delay: 0.1s; }
+        .fab-options.open .fab-option-wrap:nth-child(3) { opacity:1; transform:translateX(0); transition-delay: 0.15s; }
     </style>
 </head>
-<body>
+<body class="min-h-screen text-slate-100 relative overflow-x-hidden">
+
+    <!-- Градиент за курсором -->
     <div class="cursor-glow" id="cursorGlow"></div>
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-logo">
-            <div class="logo-name">GoFlow</div>
-            <div class="logo-sub">управление задачами</div>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a href="{% url 'task_board' %}" class="nav-item active">
-                <span class="nav-icon">◈</span> Все задачи
-            </a>
-            {% if request.user.is_superuser %}
-            <a href="{% url 'create_task' %}" class="nav-item">
-                <span class="nav-icon">＋</span> Добавить
-            </a>
-            <a href="{% url 'analytics' %}" class="nav-item">
-                <span class="nav-icon">◎</span> Статистика
-            </a>
-            {% endif %}
-        </nav>
-
-        <div class="sidebar-user">
-            <div class="user-card">
-                <div class="user-avatar">{{ request.user.username|first|upper }}</div>
-                <div class="user-info">
-                    <div class="user-name">{{ request.user.username }}</div>
-                    <div class="user-role">{% if request.user.is_superuser %}Админ{% else %}Сотрудник{% endif %}</div>
+    <!-- Navbar -->
+    <nav class="glass-nav sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="{% url 'task_board' %}" class="flex items-center gap-2 no-underline" style="text-decoration:none;">
+                <div style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                    <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
                 </div>
-                <a href="{% url 'logout' %}" class="logout-btn" title="Выйти">⏻</a>
+                <span style="font-size:17px;font-weight:700;background:linear-gradient(135deg,#a5b4fc,#c4b5fd);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Task Tracker</span>
+            </a>
+
+            <div class="flex items-center gap-1">
+                <a href="{% url 'task_board' %}" style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;transition:all 0.2s;"
+                   onmouseover="this.style.background='rgba(255,255,255,0.06)';this.style.color='white'"
+                   onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.6)'">
+                    Моя доска
+                </a>
+                {% if request.user.is_superuser %}
+                <a href="{% url 'analytics' %}" style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;transition:all 0.2s;"
+                   onmouseover="this.style.background='rgba(255,255,255,0.06)';this.style.color='white'"
+                   onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.6)'">
+                    Аналитика
+                </a>
+                {% endif %}
+
+                <!-- Аватар пользователя -->
+                <div style="display:flex;align-items:center;gap:8px;margin-left:8px;padding:6px 12px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:24px;">
+                    <div style="width:24px;height:24px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;">
+                        {{ request.user.username|first|upper }}
+                    </div>
+                    <span style="font-size:13px;font-weight:600;color:#a5b4fc;">{{ request.user.username }}</span>
+                </div>
             </div>
         </div>
-    </aside>
+    </nav>
 
-    <!-- Main -->
-    <div class="main">
-        {% block topbar %}{% endblock %}
-        <div class="page-content">
-            {% block content %}{% endblock %}
+    <!-- Основной контент -->
+    <main class="max-w-7xl mx-auto px-6 py-8 relative z-10">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Floating Action Menu -->
+    <div class="fab-menu">
+        <div class="fab-options" id="fabOptions">
+            {% if request.user.is_superuser %}
+            <div class="fab-option-wrap">
+                <a href="{% url 'create_task' %}" class="fab-option-btn">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Создать задачу
+                </a>
+            </div>
+            <div class="fab-option-wrap">
+                <a href="{% url 'analytics' %}" class="fab-option-btn">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    Аналитика
+                </a>
+            </div>
+            {% endif %}
+            <div class="fab-option-wrap">
+                <a href="{% url 'logout' %}" class="fab-option-btn danger">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    Выйти
+                </a>
+            </div>
         </div>
+        <button class="fab-btn" id="fabBtn" onclick="toggleFab()">
+            <span class="icon">+</span>
+        </button>
     </div>
 
     <script>
+        // Градиент за курсором
         const glow = document.getElementById('cursorGlow');
-        document.addEventListener('mousemove', e => {
+        document.addEventListener('mousemove', (e) => {
             glow.style.left = e.clientX + 'px';
             glow.style.top = e.clientY + 'px';
+        });
+
+        // Floating menu
+        function toggleFab() {
+            const btn = document.getElementById('fabBtn');
+            const opts = document.getElementById('fabOptions');
+            btn.classList.toggle('open');
+            opts.classList.toggle('open');
+        }
+
+        // Закрыть при клике вне
+        document.addEventListener('click', (e) => {
+            const fab = document.querySelector('.fab-menu');
+            if (!fab.contains(e.target)) {
+                document.getElementById('fabBtn').classList.remove('open');
+                document.getElementById('fabOptions').classList.remove('open');
+            }
         });
     </script>
 </body>
