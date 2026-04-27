@@ -2,42 +2,190 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Регистрация - Task Tracker</title>
+    <title>Task Tracker — Регистрация</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f3f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .login-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); width: 350px; }
-        h2 { margin-top: 0; color: #202124; font-size: 24px; font-weight: 500; margin-bottom: 20px; text-align: center; }
-        
-        /* Стилизуем встроенную форму Джанго */
-        .helptext { font-size: 11px; color: #5f6368; display: block; margin-bottom: 10px; }
-        ul.errorlist { color: #d93025; font-size: 13px; padding-left: 20px; }
-        p { margin-bottom: 15px; color: #5f6368; font-size: 14px; }
-        input[type="text"], input[type="password"] { 
-            width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box; font-size: 16px; outline: none; margin-top: 5px;
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+        body { background: #0a0a0f; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+        .cursor-glow { pointer-events: none; position: fixed; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%); transform: translate(-50%,-50%); transition: left 0.1s, top 0.1s; z-index: 0; }
+
+        input, select, textarea {
+            background: rgba(255,255,255,0.05) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            border-radius: 10px !important;
+            padding: 11px 14px !important;
+            color: white !important;
+            font-size: 14px !important;
+            width: 100% !important;
+            outline: none !important;
+            transition: border-color 0.2s !important;
+            font-family: 'Inter', sans-serif !important;
         }
-        input[type="text"]:focus, input[type="password"]:focus { border-color: #1a73e8; }
-        
-        .btn-login { background-color: #1a73e8; color: white; border: none; padding: 10px 24px; font-size: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
-        .btn-login:hover { background-color: #1557b0; }
-        .links { text-align: center; margin-top: 20px; font-size: 14px; }
-        .links a { color: #1a73e8; text-decoration: none; font-weight: 500; }
-        .links a:hover { text-decoration: underline; }
+        input:focus, select:focus { border-color: rgba(99,102,241,0.5) !important; }
+        input::placeholder { color: rgba(255,255,255,0.25) !important; }
+        select option { background: #1a1a2e; color: white; }
+
+        /* Стили для Django form as_p */
+        p { margin-bottom: 16px; }
+        p label { display: block; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 7px; }
+        ul.errorlist { list-style: none; padding: 0; margin: 4px 0 0; }
+        ul.errorlist li { color: #fca5a5; font-size: 12px; font-weight: 500; }
+        .helptext { font-size: 11px; color: rgba(255,255,255,0.25); display: block; margin-top: 4px; line-height: 1.5; }
+
+        /* Карточки выбора роли */
+        .role-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .role-card {
+            border: 1.5px solid rgba(255,255,255,0.08);
+            border-radius: 14px; padding: 16px;
+            cursor: pointer; transition: all 0.2s;
+            background: rgba(255,255,255,0.02);
+        }
+        .role-card:hover { border-color: rgba(99,102,241,0.4); background: rgba(99,102,241,0.05); }
+        .role-card.selected { border-color: #6366f1; background: rgba(99,102,241,0.1); }
+        .role-card input[type="radio"] { display: none; }
+        .role-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+        .role-title { font-size: 14px; font-weight: 600; color: white; margin-bottom: 4px; }
+        .role-desc { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.4; }
+
+        /* Поле организации — скрытое по умолчанию */
+        #orgField { display: none; }
+        #orgField.visible { display: block; }
     </style>
 </head>
 <body>
+    <div class="cursor-glow" id="cg"></div>
 
-    <div class="login-card">
-        <h2>Создать аккаунт</h2>
-        
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }} <button type="submit" class="btn-login">Зарегистрироваться</button>
-        </form>
+    <div style="position:relative;z-index:10;width:100%;max-width:460px;">
 
-        <div class="links">
-            Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
+        <!-- Лого -->
+        <div style="text-align:center;margin-bottom:32px;">
+            <div style="width:48px;height:48px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                <svg width="26" height="26" fill="none" stroke="white" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <h1 style="font-size:22px;font-weight:700;background:linear-gradient(135deg,#a5b4fc,#c4b5fd);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 6px;">Task Tracker</h1>
+            <p style="color:rgba(255,255,255,0.35);font-size:14px;margin:0;">Создайте аккаунт</p>
+        </div>
+
+        <!-- Карточка -->
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:32px;">
+
+            {% if form.non_field_errors %}
+            <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:12px 16px;margin-bottom:20px;color:#fca5a5;font-size:13px;text-align:center;">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <form method="post" id="registerForm">
+                {% csrf_token %}
+
+                <!-- Выбор роли (кастомный UI) -->
+                <div style="margin-bottom:20px;">
+                    <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Я хочу</label>
+                    <div class="role-cards">
+                        <label class="role-card" id="card-user" onclick="selectRole('user')">
+                            <input type="radio" name="role" value="user" checked>
+                            <div class="role-icon" style="background:rgba(99,102,241,0.15);">
+                                <svg width="18" height="18" fill="none" stroke="#a5b4fc" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                            </div>
+                            <div class="role-title">Пользователь</div>
+                            <div class="role-desc">Личные задачи и работа в команде</div>
+                        </label>
+
+                        <label class="role-card" id="card-manager" onclick="selectRole('manager')">
+                            <input type="radio" name="role" value="manager">
+                            <div class="role-icon" style="background:rgba(139,92,246,0.15);">
+                                <svg width="18" height="18" fill="none" stroke="#c4b5fd" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </div>
+                            <div class="role-title">Менеджер</div>
+                            <div class="role-desc">Управлять командой и назначать задачи</div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Поле организации (только для менеджера) -->
+                <div id="orgField" style="margin-bottom:16px;">
+                    <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px;">Название организации</label>
+                    <input type="text" name="organization_name" placeholder="Например: KazNU, Acme Corp...">
+                    {% if form.organization_name.errors %}
+                    <p style="color:#fca5a5;font-size:12px;margin:4px 0 0;">{{ form.organization_name.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Логин -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px;">Логин</label>
+                    <input type="text" name="username" required autofocus placeholder="Придумайте логин"
+                           value="{{ form.username.value|default:'' }}">
+                    {% if form.username.errors %}
+                    <p style="color:#fca5a5;font-size:12px;margin:4px 0 0;">{{ form.username.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Пароль -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px;">Пароль</label>
+                    <input type="password" name="password1" required placeholder="Минимум 8 символов">
+                    {% if form.password1.errors %}
+                    <p style="color:#fca5a5;font-size:12px;margin:4px 0 0;">{{ form.password1.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Подтверждение пароля -->
+                <div style="margin-bottom:24px;">
+                    <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px;">Повторите пароль</label>
+                    <input type="password" name="password2" required placeholder="Повторите пароль">
+                    {% if form.password2.errors %}
+                    <p style="color:#fca5a5;font-size:12px;margin:4px 0 0;">{{ form.password2.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+
+                <button type="submit" style="width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 0 20px rgba(99,102,241,0.3);">
+                    Создать аккаунт
+                </button>
+            </form>
+
+            <p style="text-align:center;margin-top:20px;font-size:13px;color:rgba(255,255,255,0.3);">
+                Уже есть аккаунт?
+                <a href="{% url 'login' %}" style="color:#a5b4fc;text-decoration:none;font-weight:600;">Войти</a>
+            </p>
         </div>
     </div>
 
+    <script>
+        const cg = document.getElementById('cg');
+        document.addEventListener('mousemove', e => { cg.style.left = e.clientX+'px'; cg.style.top = e.clientY+'px'; });
+
+        function selectRole(role) {
+            // Убираем selected со всех карточек
+            document.getElementById('card-user').classList.remove('selected');
+            document.getElementById('card-manager').classList.remove('selected');
+
+            // Ставим selected на выбранную
+            document.getElementById('card-' + role).classList.add('selected');
+
+            // Переключаем radio
+            document.querySelector(`input[name="role"][value="${role}"]`).checked = true;
+
+            // Показываем/скрываем поле организации
+            const orgField = document.getElementById('orgField');
+            if (role === 'manager') {
+                orgField.classList.add('visible');
+                orgField.querySelector('input').required = true;
+            } else {
+                orgField.classList.remove('visible');
+                orgField.querySelector('input').required = false;
+            }
+        }
+
+        // Инициализация — выбрать User по умолчанию
+        document.getElementById('card-user').classList.add('selected');
+    </script>
 </body>
 </html>

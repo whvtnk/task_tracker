@@ -273,7 +273,7 @@ def create_personal_task(request):
             return redirect('task_board')
     else:
         form = PersonalTaskForm()
-    return render(request, 'create_task.html', {'form': form, 'task_type': 'personal'})
+    return render(request, 'create_task.html', {'form': form, 'task_type': 'personal', 'profile': profile})
 
 
 @login_required
@@ -308,7 +308,8 @@ def create_assigned_task(request):
     return render(request, 'create_task.html', {
         'form': form,
         'task_type': 'assigned',
-        'members': members
+        'members': members, 
+        'profile': profile
     })
 
 
@@ -336,7 +337,7 @@ def edit_task(request, task_id):
     else:
         form = FormClass(instance=task)
 
-    return render(request, 'create_task.html', {'form': form, 'edit_mode': True})
+    return render(request, 'create_task.html', {'form': form, 'edit_mode': True, 'profile': profile})
 
 
 @login_required
