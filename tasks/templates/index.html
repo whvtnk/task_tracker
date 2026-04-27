@@ -146,28 +146,26 @@
         <a href="{% url 'task_board' %}" class="btn-secondary">Сброс</a>
     </div>
 </form>
-
 <!-- Задачи -->
 <div class="tasks-grid">
 {% if tasks %}
 {% for task in tasks %}
 
-{% if task.status == 'completed' %}
-{% with border_cls="border-done" dot_cls="dot-done" sd_cls="sd-done" %}
-{% elif task.status == 'in_progress' %}
-{% with border_cls="border-progress" dot_cls="dot-progress" sd_cls="sd-progress" %}
-{% elif task.status == 'review' %}
-{% with border_cls="border-review" dot_cls="dot-review" sd_cls="sd-review" %}
-{% elif task.status == 'overdue' %}
-{% with border_cls="border-overdue" dot_cls="dot-overdue" sd_cls="sd-overdue" %}
-{% else %}
-{% with border_cls="border-new" dot_cls="dot-new" sd_cls="sd-new" %}
-{% endif %}
-
-<div class="task-card {{ border_cls }}">
+<div class="task-card 
+    {% if task.status == 'completed' %}border-done
+    {% elif task.status == 'in_progress' %}border-progress
+    {% elif task.status == 'review' %}border-review
+    {% elif task.status == 'overdue' %}border-overdue
+    {% else %}border-new{% endif %}">
 
     <!-- Статус -->
-    <select class="status-dropdown status-select {{ sd_cls }}" data-id="{{ task.id }}">
+    <select class="status-dropdown status-select
+        {% if task.status == 'completed' %}sd-done
+        {% elif task.status == 'in_progress' %}sd-progress
+        {% elif task.status == 'review' %}sd-review
+        {% elif task.status == 'overdue' %}sd-overdue
+        {% else %}sd-new{% endif %}"
+        data-id="{{ task.id }}">
         <option value="new" {% if task.status == 'new' %}selected{% endif %}>Новая</option>
         <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>В работе</option>
         <option value="review" {% if task.status == 'review' %}selected{% endif %}>Проверка</option>
@@ -184,11 +182,11 @@
 
     <!-- Звёзды приоритета -->
     <span class="stars">
-        {% if task.priority >= 1 %}★{% else %}<span class="stars-gray">★</span>{% endif %}
-        {% if task.priority >= 2 %}★{% else %}<span class="stars-gray">★</span>{% endif %}
-        {% if task.priority >= 3 %}★{% else %}<span class="stars-gray">★</span>{% endif %}
-        {% if task.priority >= 4 %}★{% else %}<span class="stars-gray">★</span>{% endif %}
-        {% if task.priority >= 5 %}★{% else %}<span class="stars-gray">★</span>{% endif %}
+        {% if task.priority >= 1 %}★{% endif %}
+        {% if task.priority >= 2 %}★{% endif %}
+        {% if task.priority >= 3 %}★{% endif %}
+        {% if task.priority >= 4 %}★{% endif %}
+        {% if task.priority >= 5 %}★{% endif %}
     </span>
 
     {% if task.deadline %}
@@ -209,7 +207,7 @@
     </div>
     {% endif %}
 </div>
-{% endwith %}
+
 {% endfor %}
 
 {% else %}
