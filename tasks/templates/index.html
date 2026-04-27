@@ -2,215 +2,119 @@
 {% block content %}
 
 <style>
-.status-select {
-    padding: 5px 10px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    border-width: 1px;
-    border-style: solid;
-    cursor: pointer;
-    outline: none;
-}
-.status-completed {
-    background: rgba(16,185,129,0.1);
-    color: #6ee7b7;
-    border-color: rgba(16,185,129,0.25);
-}
-.status-in_progress {
-    background: rgba(59,130,246,0.1);
-    color: #93c5fd;
-    border-color: rgba(59,130,246,0.25);
-}
-.status-review {
-    background: rgba(245,158,11,0.1);
-    color: #fcd34d;
-    border-color: rgba(245,158,11,0.25);
-}
-.status-overdue {
-    background: rgba(239,68,68,0.1);
-    color: #fca5a5;
-    border-color: rgba(239,68,68,0.25);
-}
-.status-new {
-    background: rgba(255,255,255,0.05);
-    color: rgba(255,255,255,0.5);
-    border-color: rgba(255,255,255,0.1);
-}
-
-.task-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: rgba(255,255,255,0.9);
-}
-
-.task-title.completed {
-    text-decoration: line-through;
-    color: rgba(255,255,255,0.25);
-}
-.priority-high {
-    background: rgba(239,68,68,0.1);
-    color: #fca5a5;
-}
-.priority-medium {
-    background: rgba(245,158,11,0.1);
-    color: #fcd34d;
-}
-.priority-low {
-    background: rgba(255,255,255,0.05);
-    color: rgba(255,255,255,0.4);
-}
+    .sd { padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid;cursor:pointer;outline:none; }
+    .sd-completed { background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.25); }
+    .sd-in_progress { background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.25); }
+    .sd-review { background:rgba(245,158,11,0.1);color:#fcd34d;border-color:rgba(245,158,11,0.25); }
+    .sd-overdue { background:rgba(239,68,68,0.1);color:#fca5a5;border-color:rgba(239,68,68,0.25); }
+    .sd-new { background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);border-color:rgba(255,255,255,0.1); }
+    .task-title { font-size:14px;font-weight:500;color:white; }
+    .task-title-done { font-size:14px;font-weight:500;color:rgba(255,255,255,0.25);text-decoration:line-through; }
+    .badge { padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600; }
+    .badge-high { background:rgba(239,68,68,0.1);color:#fca5a5; }
+    .badge-mid { background:rgba(245,158,11,0.1);color:#fcd34d; }
+    .badge-low { background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.4); }
+    .task-row { display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.2s; }
+    .task-row:hover { background:rgba(99,102,241,0.04); }
+    .action-btn { padding:6px;border-radius:8px;color:rgba(255,255,255,0.3);text-decoration:none;display:flex;transition:all 0.2s; }
+    .action-btn:hover { background:rgba(99,102,241,0.15);color:#a5b4fc; }
+    .action-btn.del:hover { background:rgba(239,68,68,0.15);color:#fca5a5; }
 </style>
 
-<div class="mb-8 flex items-center justify-between">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
     <div>
-        <h1 style="font-size:24px;font-weight:700;color:white;margin:0 0 4px 0;">Мои задачи</h1>
-        <p style="color:rgba(255,255,255,0.4);font-size:14px;margin:0;">Управляйте задачами и отслеживайте прогресс</p>
+        <h1 style="font-size:22px;font-weight:700;color:white;margin:0 0 4px;">Моя доска</h1>
+        <p style="color:rgba(255,255,255,0.4);font-size:14px;margin:0;">Личные задачи</p>
     </div>
-    {% if request.user.is_superuser %}
-    <a href="{% url 'create_task' %}" style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:12px;font-size:14px;font-weight:600;text-decoration:none;box-shadow:0 0 20px rgba(99,102,241,0.3);transition:all 0.2s;"
-       onmouseover="this.style.boxShadow='0 0 30px rgba(99,102,241,0.5)'"
-       onmouseout="this.style.boxShadow='0 0 20px rgba(99,102,241,0.3)'">
+    <a href="{% url 'create_personal_task' %}" style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:12px;font-size:14px;font-weight:600;text-decoration:none;">
         <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
-        Создать задачу
+        Новая задача
     </a>
-    {% endif %}
 </div>
 
 <!-- Фильтры -->
-<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:20px;margin-bottom:24px;">
+<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:16px 20px;margin-bottom:20px;">
     <form method="GET" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
         <div style="display:flex;flex-direction:column;gap:6px;">
             <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;">Статус</label>
             <select name="status" style="padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;font-size:13px;outline:none;cursor:pointer;">
-                <option value="" style="background:#1a1a2e;">Все статусы</option>
-                <option value="new" {% if current_status == 'new' %}selected{% endif %} style="background:#1a1a2e;">New</option>
-                <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %} style="background:#1a1a2e;">In Progress</option>
-                <option value="review" {% if current_status == 'review' %}selected{% endif %} style="background:#1a1a2e;">Review</option>
-                <option value="completed" {% if current_status == 'completed' %}selected{% endif %} style="background:#1a1a2e;">Completed</option>
-                <option value="overdue" {% if current_status == 'overdue' %}selected{% endif %} style="background:#1a1a2e;">Overdue</option>
+                <option value="" style="background:#1a1a2e;">Все</option>
+                <option value="new" {% if current_status == 'new' %}selected{% endif %} style="background:#1a1a2e;">Новая</option>
+                <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %} style="background:#1a1a2e;">В работе</option>
+                <option value="review" {% if current_status == 'review' %}selected{% endif %} style="background:#1a1a2e;">На проверке</option>
+                <option value="completed" {% if current_status == 'completed' %}selected{% endif %} style="background:#1a1a2e;">Выполнено</option>
             </select>
         </div>
-
-        {% if request.user.is_superuser %}
         <div style="display:flex;flex-direction:column;gap:6px;">
-            <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;">Сотрудник</label>
-            <select name="assignee" style="padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;font-size:13px;outline:none;cursor:pointer;">
-                <option value="" style="background:#1a1a2e;">Все сотрудники</option>
-                {% for u in users %}
-                <option value="{{ u.id }}" {% if current_assignee == u.id|stringformat:"s" %}selected{% endif %} style="background:#1a1a2e;">{{ u.username }}</option>
-                {% endfor %}
-            </select>
+            <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;">Поиск</label>
+            <input type="text" name="q" value="{{ search_q }}" placeholder="Название задачи..."
+                   style="padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;font-size:13px;outline:none;width:200px;">
         </div>
-        {% endif %}
-
-        <div style="display:flex;flex-direction:column;gap:6px;">
-            <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;">Сортировка</label>
-            <select name="sort" style="padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;font-size:13px;outline:none;cursor:pointer;">
-                <option value="" style="background:#1a1a2e;">Без сортировки</option>
-                <option value="deadline_asc" {% if current_sort == 'deadline_asc' %}selected{% endif %} style="background:#1a1a2e;">По дедлайну</option>
-                <option value="priority_desc" {% if current_sort == 'priority_desc' %}selected{% endif %} style="background:#1a1a2e;">По приоритету</option>
-            </select>
-        </div>
-
         <div style="display:flex;gap:8px;padding-bottom:1px;">
-            <button type="submit" style="padding:9px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
-                Применить
-            </button>
-            <a href="{% url 'task_board' %}" style="padding:9px 20px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);border-radius:8px;font-size:13px;font-weight:500;text-decoration:none;display:flex;align-items:center;">
-                Сбросить
-            </a>
+            <button type="submit" style="padding:9px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Найти</button>
+            <a href="{% url 'task_board' %}" style="padding:9px 16px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border-radius:8px;font-size:13px;text-decoration:none;display:flex;align-items:center;">Сброс</a>
         </div>
     </form>
 </div>
 
-<!-- Список задач -->
+<!-- Задачи -->
 <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;">
     {% if tasks %}
     {% for task in tasks %}
-    <div style="display:flex;align-items:center;gap:16px;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.2s;"
-         onmouseover="this.style.background='rgba(255,255,255,0.03)'"
-         onmouseout="this.style.background='transparent'">
-
-        <!-- Статус -->
-        <select class="status-select status-{{ task.status }}" data-id="{{ task.id }}">
-            <option value="new" {% if task.status == 'new' %}selected{% endif %} style="background:#1a1a2e;">New</option>
-            <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %} style="background:#1a1a2e;">In Progress</option>
-            <option value="review" {% if task.status == 'review' %}selected{% endif %} style="background:#1a1a2e;">Review</option>
-            <option value="completed" {% if task.status == 'completed' %}selected{% endif %} style="background:#1a1a2e;">Completed</option>
-            {% if task.status == 'overdue' %}
-            <option value="overdue" selected disabled style="background:#1a1a2e;">Overdue ⚠️</option>
-            {% endif %}
+    <div class="task-row">
+        <select class="sd sd-{{ task.status }} status-select" data-id="{{ task.id }}">
+            <option value="new" {% if task.status == 'new' %}selected{% endif %} style="background:#1a1a2e;">Новая</option>
+            <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %} style="background:#1a1a2e;">В работе</option>
+            <option value="review" {% if task.status == 'review' %}selected{% endif %} style="background:#1a1a2e;">На проверке</option>
+            <option value="completed" {% if task.status == 'completed' %}selected{% endif %} style="background:#1a1a2e;">Выполнено</option>
+            {% if task.status == 'overdue' %}<option value="overdue" selected disabled style="background:#1a1a2e;">Просрочено</option>{% endif %}
         </select>
 
-        <!-- Инфо задачи -->
-        <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <span class="task-title{% if task.status == 'completed' %} completed{% endif %}">
-                {{ task.title }}
-            </span>
-
-            <!-- Приоритет -->
-            <span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;" class="{% if task.priority >= 4 %}priority-high{% elif task.priority == 3 %}priority-medium{% else %}priority-low{% endif %}">
-                {% if task.priority >= 4 %}🔥{% elif task.priority == 3 %}⚡{% else %}📌{% endif %} P{{ task.priority }}
-            </span>
-
-            <!-- Дедлайн -->
-            {% if task.deadline %}
-            <span style="display:flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(255,255,255,0.04);border-radius:6px;font-size:11px;color:rgba(255,255,255,0.35);">
-                <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                {{ task.deadline|date:"d.m.Y H:i" }}
-            </span>
+        <div style="flex:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            {% if task.status == 'completed' %}
+            <span class="task-title-done">{{ task.title }}</span>
+            {% else %}
+            <span class="task-title">{{ task.title }}</span>
             {% endif %}
 
-            <!-- Исполнитель -->
-            {% if request.user.is_superuser %}
-            <span style="display:flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(99,102,241,0.08);border-radius:6px;font-size:11px;color:rgba(165,180,252,0.7);">
-                <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
-                {% if task.assignee %}{{ task.assignee.username }}{% else %}Без исполнителя{% endif %}
-            </span>
+            {% if task.priority >= 4 %}
+            <span class="badge badge-high">Высокий</span>
+            {% elif task.priority == 3 %}
+            <span class="badge badge-mid">Средний</span>
+            {% else %}
+            <span class="badge badge-low">Низкий</span>
+            {% endif %}
+
+            {% if task.deadline %}
+            <span style="font-size:11px;color:rgba(255,255,255,0.3);">до {{ task.deadline|date:"d.m.Y" }}</span>
             {% endif %}
         </div>
 
-        <!-- Кнопки действий -->
-        {% if request.user.is_superuser %}
         <div style="display:flex;gap:4px;">
-            <a href="{% url 'edit_task' task.id %}" title="Редактировать"
-               style="padding:7px;border-radius:8px;color:rgba(255,255,255,0.25);text-decoration:none;transition:all 0.2s;display:flex;"
-               onmouseover="this.style.background='rgba(99,102,241,0.15)';this.style.color='#a5b4fc'"
-               onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.25)'">
+            <a href="{% url 'edit_task' task.id %}" class="action-btn">
                 <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
             </a>
-            <a href="{% url 'delete_task' task.id %}" title="Удалить"
-               style="padding:7px;border-radius:8px;color:rgba(255,255,255,0.25);text-decoration:none;transition:all 0.2s;display:flex;"
-               onmouseover="this.style.background='rgba(239,68,68,0.15)';this.style.color='#fca5a5'"
-               onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.25)'"
-               onclick="return confirm('Точно удалить?');">
+            <a href="{% url 'delete_task' task.id %}" class="action-btn del" onclick="return confirm('Удалить?');">
                 <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                 </svg>
             </a>
         </div>
-        {% endif %}
     </div>
     {% endfor %}
-
     {% else %}
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center;">
-        <div style="width:64px;height:64px;background:rgba(99,102,241,0.1);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
-            <svg width="32" height="32" fill="none" stroke="rgba(165,180,252,0.6)" viewBox="0 0 24 24">
+    <div style="display:flex;flex-direction:column;align-items:center;padding:72px 20px;text-align:center;">
+        <div style="width:56px;height:56px;background:rgba(99,102,241,0.1);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+            <svg width="28" height="28" fill="none" stroke="rgba(165,180,252,0.6)" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
         </div>
-        <p style="color:rgba(255,255,255,0.5);font-size:16px;font-weight:500;margin:0 0 4px 0;">Все задачи выполнены!</p>
-        <p style="color:rgba(255,255,255,0.25);font-size:13px;margin:0;">Отличная работа 🎉</p>
+        <p style="color:rgba(255,255,255,0.5);font-size:15px;font-weight:600;margin:0 0 4px;">Нет задач</p>
+        <p style="color:rgba(255,255,255,0.25);font-size:13px;margin:0;">Создайте первую личную задачу!</p>
     </div>
     {% endif %}
 </div>
@@ -218,12 +122,10 @@
 <script>
 function getCookie(name) {
     let v = null;
-    if (document.cookie) {
-        document.cookie.split(';').forEach(c => {
-            c = c.trim();
-            if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
-        });
-    }
+    if (document.cookie) document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+    });
     return v;
 }
 document.querySelectorAll('.status-select').forEach(sel => {
@@ -232,7 +134,7 @@ document.querySelectorAll('.status-select').forEach(sel => {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
             body: JSON.stringify({ status: this.value })
-        }).then(r => window.location.reload());
+        }).then(() => window.location.reload());
     });
 });
 </script>

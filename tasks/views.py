@@ -1,30 +1,28 @@
+import uuid
 from django.db import models
+from django.db.models import Q, Count
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.auth import login, logout
+from django.http import JsonResponse
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
-
-from django.contrib.auth.models import User
-from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q, Count
-
 from rest_framework import viewsets, filters
-from .models import Task
+from django_filters.rest_framework import DjangoFilterBackend
 
-from .serializers import TaskSerializer 
-from .permissions import IsAdminOrOwner, IsSuperUser
+from .models import Task, Organization, UserProfile, InviteLink
+from .serializers import TaskSerializer, OrganizationSerializer, InviteLinkSerializer
+from .permissions import IsAdminOrOwner, IsSuperUser, IsManager
+from .forms import TaskForm, PersonalTaskForm, RegisterForm, OrganizationForm
 
-from django.shortcuts import get_object_or_404, render
-from django.contrib.auth.decorators import login_required
 
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login
-from django.shortcuts import render, redirect
-
-from .forms import TaskForm
+# ─── API ViewSets ────────────────────────────────────────────
 
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all().order_by('-created_at')
-    serializer_class = TaskSerializer   
+    serializer_class = TaskSerializer
     permission_classes = [IsAdminOrOwner]
 
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -36,8 +34,10 @@ class TaskViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.is_superuser:
             return Task.objects.all().order_by('-created_at')
-        return Task.objects.filter(models.Q(author=user) | models.Q(assignee=user)).order_by('-created_at')
-    
+        return Task.objects.filter(
+            Q(author=user) | Q(assignee=user)
+        ).order_by('-created_at')
+
 
 class AnalyticsView(APIView):
     permission_classes = [IsSuperUser]
@@ -46,12 +46,7 @@ class AnalyticsView(APIView):
         total_tasks = Task.objects.count()
         completed_tasks = Task.objects.filter(status='completed').count()
         overdue_tasks = Task.objects.filter(status='overdue').count()
-
-
-        completion_rate = 0
-        if total_tasks > 0:
-            completion_rate = round((completed_tasks / total_tasks) * 100, 2)
-
+        completion_rate = round((completed_tasks / total_tasks) * 100, 2) if total_tasks > 0 else 0
 
         users_stats = User.objects.annotate(
             total_assigned=Count('assigned_tasks'),
@@ -66,86 +61,296 @@ class AnalyticsView(APIView):
             'completion_rate_percent': completion_rate,
             'employee_stats': list(users_stats)
         })
-    from django.shortcuts import get_object_or_404 # Добавь этот импорт наверх, он нам понадобится!
 
-@login_required
-def task_board(request):
-    # 1. Базовый запрос (кто что видит)
-    if request.user.is_superuser:
-        user_tasks = Task.objects.all()
-        users = User.objects.all() # Боссу нужен список всех юзеров для фильтра
+
+# ─── Утилита: получить или создать профиль ───────────────────
+
+def get_or_create_profile(user):
+    profile, created = UserProfile.objects.get_or_create(
+        user=user,
+        defaults={'role': 'user'}
+    )
+    return profile
+
+
+# ─── Auth Views ──────────────────────────────────────────────
+
+def register(request):
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            role = form.cleaned_data['role']
+            org_name = form.cleaned_data.get('organization_name', '')
+
+            if role == 'manager':
+                org = Organization.objects.create(name=org_name, owner=user)
+                UserProfile.objects.create(user=user, role='manager', organization=org)
+            else:
+                UserProfile.objects.create(user=user, role='user')
+
+            login(request, user)
+            return redirect('task_board')
     else:
-        user_tasks = Task.objects.filter(assignee=request.user)
-        users = None
+        form = RegisterForm()
+    return render(request, 'register.html', {'form': form})
 
-    # 2. Ловим фильтры из поисковой строки браузера (GET-параметры)
-    status_filter = request.GET.get('status')
-    assignee_filter = request.GET.get('assignee')
-    sort_by = request.GET.get('sort')
-
-    # 3. Применяем фильтры, если они есть
-    if status_filter:
-        user_tasks = user_tasks.filter(status=status_filter)
-
-    if assignee_filter and request.user.is_superuser:
-        user_tasks = user_tasks.filter(assignee_id=assignee_filter)
-
-    # 4. Применяем сортировку
-    if sort_by == 'deadline_asc':
-        user_tasks = user_tasks.order_by('deadline') # Сначала срочные
-    elif sort_by == 'deadline_desc':
-        user_tasks = user_tasks.order_by('-deadline')
-    elif sort_by == 'priority_desc':
-        user_tasks = user_tasks.order_by('-priority') # Сначала важные (5 -> 1)
-    elif sort_by == 'priority_asc':
-        user_tasks = user_tasks.order_by('priority')
-    else:
-        user_tasks = user_tasks.order_by('-created_at') # По умолчанию новые сверху
-
-    # Упаковываем всё и отдаем в HTML
-    context = {
-        'tasks': user_tasks,
-        'users': users,
-        'current_status': status_filter,
-        'current_assignee': assignee_filter,
-        'current_sort': sort_by,
-    }
-    return render(request, 'index.html', context)
-
-
-from django.contrib.auth import logout
-from django.shortcuts import redirect
 
 def custom_logout(request):
     logout(request)
     return redirect('login')
 
 
-def register(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('task_board')
-    else:
-        form = UserCreationForm()
-        
-    return render(request, 'register.html', {'form': form})
+# ─── Инвайт система ──────────────────────────────────────────
 
 @login_required
-def create_task(request):
+def generate_invite(request):
+    """Менеджер генерирует новую инвайт-ссылку"""
+    profile = get_or_create_profile(request.user)
+    if profile.role != 'manager':
+        return redirect('task_board')
+
+    invite = InviteLink.objects.create(
+        organization=profile.organization,
+        created_by=request.user
+    )
+    invite_url = request.build_absolute_uri(f'/invite/{invite.token}/')
+    return JsonResponse({'invite_url': invite_url, 'token': str(invite.token)})
+
+
+@login_required
+def accept_invite(request, token):
+    """Юзер принимает инвайт и вступает в организацию"""
+    invite = get_object_or_404(InviteLink, token=token, is_active=True)
+    profile = get_or_create_profile(request.user)
+
+    if profile.role == 'manager':
+        return render(request, 'invite_error.html', {
+            'error': 'Менеджеры не могут вступать в организации через инвайт.'
+        })
+
+    if profile.organization is not None:
+        return render(request, 'invite_error.html', {
+            'error': 'Вы уже состоите в организации.'
+        })
+
+    # Вступаем в организацию
+    profile.organization = invite.organization
+    profile.save()
+
+    # Деактивируем ссылку
+    invite.is_active = False
+    invite.save()
+
+    return redirect('assigned_tasks')
+
+
+@login_required
+def leave_organization(request):
+    """Юзер покидает организацию (только если менеджер удалил орг)"""
+    profile = get_or_create_profile(request.user)
+    if profile.organization and not profile.organization.pk:
+        profile.organization = None
+        profile.save()
+    return redirect('task_board')
+
+
+# ─── Доска задач ─────────────────────────────────────────────
+
+@login_required
+def task_board(request):
+    """Главная доска — личные задачи пользователя"""
+    profile = get_or_create_profile(request.user)
+
+    # Личные задачи — только свои
+    personal_tasks = Task.objects.filter(
+        author=request.user,
+        task_type='personal'
+    ).order_by('-created_at')
+
+    # Фильтры
+    status_filter = request.GET.get('status')
+    sort_by = request.GET.get('sort')
+    search_q = request.GET.get('q', '')
+
+    if status_filter:
+        personal_tasks = personal_tasks.filter(status=status_filter)
+    if search_q:
+        personal_tasks = personal_tasks.filter(
+            Q(title__icontains=search_q) | Q(description__icontains=search_q)
+        )
+    if sort_by == 'deadline_asc':
+        personal_tasks = personal_tasks.order_by('deadline')
+    elif sort_by == 'priority_desc':
+        personal_tasks = personal_tasks.order_by('-priority')
+
+    context = {
+        'tasks': personal_tasks,
+        'profile': profile,
+        'current_status': status_filter,
+        'current_sort': sort_by,
+        'search_q': search_q,
+        'page': 'board',
+    }
+    return render(request, 'index.html', context)
+
+
+@login_required
+def assigned_tasks(request):
+    """Назначено мне — задачи от менеджера"""
+    profile = get_or_create_profile(request.user)
+
+    tasks = Task.objects.filter(
+        assignee=request.user,
+        task_type='assigned'
+    ).order_by('-created_at')
+
+    status_filter = request.GET.get('status')
+    if status_filter:
+        tasks = tasks.filter(status=status_filter)
+
+    context = {
+        'tasks': tasks,
+        'profile': profile,
+        'current_status': status_filter,
+        'page': 'assigned',
+    }
+    return render(request, 'assigned.html', context)
+
+
+@login_required
+def manager_board(request):
+    """Менеджер видит задачи своей команды"""
+    profile = get_or_create_profile(request.user)
+    if profile.role != 'manager':
+        return redirect('task_board')
+
+    org = profile.organization
+    # Члены организации
+    members = UserProfile.objects.filter(organization=org).select_related('user')
+
+    # Задачи назначенные менеджером
+    assigned = Task.objects.filter(
+        author=request.user,
+        task_type='assigned',
+        organization=org
+    ).order_by('-created_at')
+
+    # Фильтры
+    assignee_filter = request.GET.get('assignee')
+    status_filter = request.GET.get('status')
+    if assignee_filter:
+        assigned = assigned.filter(assignee_id=assignee_filter)
+    if status_filter:
+        assigned = assigned.filter(status=status_filter)
+
+    context = {
+        'tasks': assigned,
+        'members': members,
+        'organization': org,
+        'profile': profile,
+        'current_assignee': assignee_filter,
+        'current_status': status_filter,
+        'page': 'manager',
+    }
+    return render(request, 'manager_board.html', context)
+
+
+# ─── CRUD задач ──────────────────────────────────────────────
+
+@login_required
+def create_personal_task(request):
+    """Создать личную задачу"""
+    profile = get_or_create_profile(request.user)
+    if request.method == 'POST':
+        form = PersonalTaskForm(request.POST)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.author = request.user
+            task.task_type = 'personal'
+            task.project = 'Личные'
+            task.save()
+            return redirect('task_board')
+    else:
+        form = PersonalTaskForm()
+    return render(request, 'create_task.html', {'form': form, 'task_type': 'personal'})
+
+
+@login_required
+def create_assigned_task(request):
+    """Менеджер создаёт задачу для участника команды"""
+    profile = get_or_create_profile(request.user)
+    if profile.role != 'manager':
+        return redirect('task_board')
+
+    org = profile.organization
+    members = UserProfile.objects.filter(organization=org).select_related('user')
+
     if request.method == 'POST':
         form = TaskForm(request.POST)
+        # Ограничиваем assignee только членами организации
+        form.fields['assignee'].queryset = User.objects.filter(
+            profile__organization=org
+        )
         if form.is_valid():
-            task = form.save(commit=False) # Говорим Джанго: "Подожди, пока не сохраняй!"
-            task.author = request.user       # Автоматически ставим автором того, кто нажал кнопку
-            task.save()                      # Вот теперь сохраняем в базу
-            return redirect('task_board')    # Возвращаем на доску
+            task = form.save(commit=False)
+            task.author = request.user
+            task.task_type = 'assigned'
+            task.organization = org
+            task.save()
+            return redirect('manager_board')
     else:
         form = TaskForm()
-    
-    return render(request, 'create_task.html', {'form': form})  
+        form.fields['assignee'].queryset = User.objects.filter(
+            profile__organization=org
+        )
+
+    return render(request, 'create_task.html', {
+        'form': form,
+        'task_type': 'assigned',
+        'members': members
+    })
+
+
+@login_required
+def edit_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    profile = get_or_create_profile(request.user)
+
+    # Только автор может редактировать
+    if task.author != request.user and not request.user.is_superuser:
+        return redirect('task_board')
+
+    if task.task_type == 'personal':
+        FormClass = PersonalTaskForm
+    else:
+        FormClass = TaskForm
+
+    if request.method == 'POST':
+        form = FormClass(request.POST, instance=task)
+        if form.is_valid():
+            form.save()
+            if task.task_type == 'assigned':
+                return redirect('manager_board')
+            return redirect('task_board')
+    else:
+        form = FormClass(instance=task)
+
+    return render(request, 'create_task.html', {'form': form, 'edit_mode': True})
+
+
+@login_required
+def delete_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    if task.author == request.user or request.user.is_superuser:
+        task_type = task.task_type
+        task.delete()
+        if task_type == 'assigned':
+            return redirect('manager_board')
+    return redirect('task_board')
+
+
+# ─── Аналитика ───────────────────────────────────────────────
 
 @login_required
 def analytics_board(request):
@@ -155,10 +360,7 @@ def analytics_board(request):
     total_tasks = Task.objects.count()
     completed_tasks = Task.objects.filter(status='completed').count()
     overdue_tasks = Task.objects.filter(status='overdue').count()
-
-    completion_rate = 0
-    if total_tasks > 0:
-        completion_rate = round((completed_tasks / total_tasks) * 100, 2)
+    completion_rate = round((completed_tasks / total_tasks) * 100, 2) if total_tasks > 0 else 0
 
     users_stats = User.objects.annotate(
         total_assigned=Count('assigned_tasks'),
@@ -176,7 +378,6 @@ def analytics_board(request):
         'overdue_tasks': overdue_tasks,
         'completion_rate': completion_rate,
         'employee_stats': users_stats,
-        
         'unassigned_total': unassigned_total,
         'unassigned_completed': unassigned_completed,
         'unassigned_overdue': unassigned_overdue,
@@ -184,55 +385,36 @@ def analytics_board(request):
     return render(request, 'analytics.html', context)
 
 
-@login_required
-def delete_task(request, task_id):
-    if request.user.is_superuser:
-        task = get_object_or_404(Task, id=task_id)
-        task.delete()
-    return redirect('task_board')
+# ─── Менеджмент организации ──────────────────────────────────
 
 @login_required
-def edit_task(request, task_id):
-    if not request.user.is_superuser:
+def organization_settings(request):
+    """Настройки организации для менеджера"""
+    profile = get_or_create_profile(request.user)
+    if profile.role != 'manager':
         return redirect('task_board')
-        
-    task = get_object_or_404(Task, id=task_id)
-    
-    if request.method == 'POST':
-        form = TaskForm(request.POST, instance=task)
-        if form.is_valid():
-            form.save()
-            return redirect('task_board')
-    else:
-        form = TaskForm(instance=task)
-        
-    return render(request, 'create_task.html', {'form': form, 'edit_mode': True})
+
+    org = profile.organization
+    members = UserProfile.objects.filter(organization=org).select_related('user')
+    invites = InviteLink.objects.filter(organization=org, is_active=True)
+
+    context = {
+        'organization': org,
+        'members': members,
+        'invites': invites,
+        'profile': profile,
+    }
+    return render(request, 'org_settings.html', context)
 
 
-'''
-вот это фронт моего сайта в данный момент и мне учительница сказала исправить типа 
+@login_required
+def remove_member(request, user_id):
+    """Менеджер удаляет участника из организации"""
+    profile = get_or_create_profile(request.user)
+    if profile.role != 'manager':
+        return redirect('task_board')
 
-улучшить вид сайта так как стиль сайта не устраивает и вот теперь 
-
-для этого я собирался использовать  Agent Templates | 21st | 21st 
-
-но у него оказалось платн подписка вроде того и теперь если я дам тебе промпты или сам компонент ты можешь мне создать такие красивые сайты 
-
-и еще изначально в пример нам поставили TasksBoard | Desktop app for Google Tasks   этот сайт  
-
-теперь я бы хотел улучшить саит до совершенства  
-
-посмотрев наш примерный саит я осознал что мне надо улучшить не только стиль и сам бэкенды и тд 
-
-
-
-вот в пример промптов которых я бы использовал 
-
-
-
-и вот еще мне написать это все в режим code 
-
-
-
-
-'''
+    member_profile = get_object_or_404(UserProfile, user_id=user_id, organization=profile.organization)
+    member_profile.organization = None
+    member_profile.save()
+    return redirect('org_settings')

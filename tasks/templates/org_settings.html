@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div style="margin-bottom:28px;">
+    <h1 style="font-size:22px;font-weight:700;color:white;margin:0 0 4px;">{{ organization.name }}</h1>
+    <p style="color:rgba(255,255,255,0.4);font-size:14px;margin:0;">Настройки организации</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+    <!-- Участники -->
+    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;">
+        <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <h2 style="font-size:15px;font-weight:600;color:white;margin:0;">Участники ({{ members|length }})</h2>
+        </div>
+        {% for m in members %}
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;">
+                    {{ m.user.username|first|upper }}
+                </div>
+                <span style="font-size:14px;font-weight:500;color:white;">{{ m.user.username }}</span>
+            </div>
+            <a href="{% url 'remove_member' m.user.id %}"
+               style="padding:5px 12px;background:rgba(239,68,68,0.1);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;"
+               onclick="return confirm('Удалить участника?');">
+                Удалить
+            </a>
+        </div>
+        {% empty %}
+        <div style="padding:32px;text-align:center;color:rgba(255,255,255,0.3);font-size:14px;">
+            Нет участников
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Инвайт ссылки -->
+    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;">
+        <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;">
+            <h2 style="font-size:15px;font-weight:600;color:white;margin:0;">Инвайт ссылки</h2>
+            <button onclick="generateInvite()" style="padding:6px 14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">
+                + Создать
+            </button>
+        </div>
+
+        <div id="inviteList" style="padding:16px 20px;">
+            {% for inv in invites %}
+            <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.15);border-radius:10px;padding:12px;margin-bottom:10px;">
+                <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;">Создана: {{ inv.created_at|date:"d.m.Y H:i" }}</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <code style="font-size:11px;color:#a5b4fc;background:rgba(99,102,241,0.1);padding:4px 8px;border-radius:6px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        {{ request.scheme }}://{{ request.get_host }}/invite/{{ inv.token }}/
+                    </code>
+                    <button onclick="copyLink('{{ request.scheme }}://{{ request.get_host }}/invite/{{ inv.token }}/')"
+                            style="padding:5px 10px;background:rgba(99,102,241,0.2);color:#a5b4fc;border:none;border-radius:6px;font-size:11px;cursor:pointer;">
+                        Копировать
+                    </button>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align:center;color:rgba(255,255,255,0.3);font-size:14px;padding:20px 0;">
+                Нет активных ссылок
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div id="newInviteBox" style="display:none;margin-top:16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:14px;padding:20px;">
+    <p style="color:#6ee7b7;font-size:13px;font-weight:600;margin:0 0 8px;">Новая ссылка создана!</p>
+    <div style="display:flex;gap:8px;align-items:center;">
+        <code id="newInviteUrl" style="font-size:12px;color:#a5b4fc;background:rgba(99,102,241,0.1);padding:8px 12px;border-radius:8px;flex:1;"></code>
+        <button onclick="copyNew()" style="padding:8px 16px;background:rgba(16,185,129,0.2);color:#6ee7b7;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Копировать</button>
+    </div>
+</div>
+
+<script>
+function getCookie(name) {
+    let v = null;
+    if (document.cookie) document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+    });
+    return v;
+}
+
+async function generateInvite() {
+    const res = await fetch('/invite/generate/', {
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    });
+    const data = await res.json();
+    document.getElementById('newInviteUrl').textContent = data.invite_url;
+    document.getElementById('newInviteBox').style.display = 'block';
+}
+
+function copyLink(url) {
+    navigator.clipboard.writeText(url);
+    alert('Ссылка скопирована!');
+}
+
+function copyNew() {
+    const url = document.getElementById('newInviteUrl').textContent;
+    navigator.clipboard.writeText(url);
+    alert('Ссылка скопирована!');
+}
+</script>
+{% endblock %}

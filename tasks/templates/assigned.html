@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+    .sd { padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid;cursor:pointer;outline:none; }
+    .sd-completed { background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.25); }
+    .sd-in_progress { background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.25); }
+    .sd-review { background:rgba(245,158,11,0.1);color:#fcd34d;border-color:rgba(245,158,11,0.25); }
+    .sd-overdue { background:rgba(239,68,68,0.1);color:#fca5a5;border-color:rgba(239,68,68,0.25); }
+    .sd-new { background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);border-color:rgba(255,255,255,0.1); }
+    .task-title { font-size:14px;font-weight:500;color:white; }
+    .task-title-done { font-size:14px;font-weight:500;color:rgba(255,255,255,0.25);text-decoration:line-through; }
+    .badge { padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600; }
+    .badge-high { background:rgba(239,68,68,0.1);color:#fca5a5; }
+    .badge-mid { background:rgba(245,158,11,0.1);color:#fcd34d; }
+    .badge-low { background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.4); }
+    .task-row { display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.2s; }
+    .task-row:hover { background:rgba(99,102,241,0.04); }
+</style>
+
+<div style="margin-bottom:28px;">
+    <h1 style="font-size:22px;font-weight:700;color:white;margin:0 0 4px;">Назначено мне</h1>
+    <p style="color:rgba(255,255,255,0.4);font-size:14px;margin:0;">
+        Задачи от менеджера
+        {% if profile.organization %} · {{ profile.organization.name }}{% endif %}
+    </p>
+</div>
+
+{% if not profile.organization %}
+<div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:16px;padding:32px;text-align:center;">
+    <svg width="40" height="40" fill="none" stroke="rgba(165,180,252,0.5)" viewBox="0 0 24 24" style="margin:0 auto 12px;display:block;">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+    </svg>
+    <p style="color:rgba(255,255,255,0.5);font-size:15px;font-weight:600;margin:0 0 4px;">Вы не в организации</p>
+    <p style="color:rgba(255,255,255,0.25);font-size:13px;margin:0;">Попросите менеджера отправить вам инвайт-ссылку</p>
+</div>
+{% else %}
+
+<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:16px 20px;margin-bottom:20px;">
+    <form method="GET" style="display:flex;gap:12px;align-items:center;">
+        <select name="status" style="padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;font-size:13px;outline:none;">
+            <option value="" style="background:#1a1a2e;">Все статусы</option>
+            <option value="new" {% if current_status == 'new' %}selected{% endif %} style="background:#1a1a2e;">Новая</option>
+            <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %} style="background:#1a1a2e;">В работе</option>
+            <option value="review" {% if current_status == 'review' %}selected{% endif %} style="background:#1a1a2e;">На проверке</option>
+            <option value="completed" {% if current_status == 'completed' %}selected{% endif %} style="background:#1a1a2e;">Выполнено</option>
+        </select>
+        <button type="submit" style="padding:8px 18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Фильтр</button>
+        <a href="{% url 'assigned_tasks' %}" style="padding:8px 14px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);border-radius:8px;font-size:13px;text-decoration:none;">Сброс</a>
+    </form>
+</div>
+
+<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;">
+    {% if tasks %}
+    {% for task in tasks %}
+    <div class="task-row">
+        <select class="sd sd-{{ task.status }} status-select" data-id="{{ task.id }}">
+            <option value="new" {% if task.status == 'new' %}selected{% endif %} style="background:#1a1a2e;">Новая</option>
+            <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %} style="background:#1a1a2e;">В работе</option>
+            <option value="review" {% if task.status == 'review' %}selected{% endif %} style="background:#1a1a2e;">На проверке</option>
+            <option value="completed" {% if task.status == 'completed' %}selected{% endif %} style="background:#1a1a2e;">Выполнено</option>
+            {% if task.status == 'overdue' %}<option value="overdue" selected disabled style="background:#1a1a2e;">Просрочено!</option>{% endif %}
+        </select>
+
+        <div style="flex:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            {% if task.status == 'completed' %}
+            <span class="task-title-done">{{ task.title }}</span>
+            {% else %}
+            <span class="task-title">{{ task.title }}</span>
+            {% endif %}
+
+            {% if task.priority >= 4 %}
+            <span class="badge badge-high">Высокий</span>
+            {% elif task.priority == 3 %}
+            <span class="badge badge-mid">Средний</span>
+            {% else %}
+            <span class="badge badge-low">Низкий</span>
+            {% endif %}
+
+            {% if task.deadline %}
+            <span style="font-size:11px;color:rgba(255,255,255,0.3);">до {{ task.deadline|date:"d.m.Y" }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="text-align:center;padding:60px 20px;">
+        <p style="color:rgba(255,255,255,0.3);font-size:15px;margin:0;">Нет назначенных задач</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<script>
+function getCookie(name) {
+    let v = null;
+    if (document.cookie) document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+    });
+    return v;
+}
+document.querySelectorAll('.status-select').forEach(sel => {
+    sel.addEventListener('change', function() {
+        fetch(`/api/tasks/${this.dataset.id}/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ status: this.value })
+        }).then(() => window.location.reload());
+    });
+});
+</script>
+{% endblock %}
