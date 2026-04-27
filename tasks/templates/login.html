@@ -4,56 +4,55 @@
     <meta charset="UTF-8">
     <title>Вход — Task Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
-        body { background: #0a0a0f; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .cursor-glow { pointer-events: none; position: fixed; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%); transform: translate(-50%, -50%); transition: left 0.1s, top 0.1s; z-index: 0; }
-        input { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 10px !important; padding: 12px 14px !important; color: white !important; font-size: 14px !important; width: 100% !important; outline: none !important; transition: border-color 0.2s !important; }
-        input:focus { border-color: rgba(99,102,241,0.5) !important; }
+        * { font-family: 'Nunito', sans-serif; box-sizing: border-box; }
+        body { background: #0f0a06; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .cursor-glow { pointer-events: none; position: fixed; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(249,115,22,0.1) 0%, transparent 70%); transform: translate(-50%, -50%); transition: left 0.12s, top 0.12s; z-index: 0; }
+        input { background: rgba(255,255,255,0.04) !important; border: 1px solid rgba(249,115,22,0.15) !important; border-radius: 50px !important; padding: 12px 18px !important; color: white !important; font-size: 14px !important; font-weight: 600 !important; width: 100% !important; outline: none !important; transition: border-color 0.2s !important; font-family: 'Nunito', sans-serif !important; }
+        input:focus { border-color: rgba(249,115,22,0.5) !important; }
+        input::placeholder { color: rgba(255,255,255,0.2) !important; }
     </style>
 </head>
 <body>
     <div class="cursor-glow" id="cg"></div>
 
-    <div style="position:relative;z-index:10;width:100%;max-width:400px;padding:24px;">
-        <!-- Logo -->
+    <div style="position:relative;z-index:10;width:100%;max-width:420px;padding:24px;">
         <div style="text-align:center;margin-bottom:32px;">
-            <div style="width:48px;height:48px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
-                <svg width="26" height="26" fill="none" stroke="white" viewBox="0 0 24 24">
+            <div style="width:56px;height:56px;background:linear-gradient(135deg,#f97316,#fbbf24);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 0 24px rgba(249,115,22,0.4);">
+                <svg width="30" height="30" fill="none" stroke="white" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
-            <h1 style="font-size:22px;font-weight:700;background:linear-gradient(135deg,#a5b4fc,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 6px;">Task Tracker</h1>
-            <p style="color:rgba(255,255,255,0.35);font-size:14px;margin:0;">Войдите в свой аккаунт</p>
+            <h1 style="font-size:24px;font-weight:800;background:linear-gradient(135deg,#fb923c,#fbbf24);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 6px;">Task Tracker</h1>
+            <p style="color:rgba(255,255,255,0.3);font-size:14px;font-weight:600;margin:0;">Добро пожаловать! 🧡</p>
         </div>
 
-        <!-- Card -->
-        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:32px;">
+        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(249,115,22,0.1);border-radius:24px;padding:32px;">
             {% if form.errors %}
-            <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:12px 16px;margin-bottom:20px;color:#fca5a5;font-size:13px;text-align:center;">
-                Неверный логин или пароль
+            <div style="background:rgba(251,113,133,0.08);border:1px solid rgba(251,113,133,0.2);border-radius:50px;padding:12px 20px;margin-bottom:20px;color:#fb7185;font-size:13px;font-weight:700;text-align:center;">
+                ❌ Неверный логин или пароль
             </div>
             {% endif %}
 
             <form method="post">
                 {% csrf_token %}
                 <div style="margin-bottom:16px;">
-                    <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">Логин</label>
+                    <label style="display:block;font-size:11px;font-weight:700;color:rgba(249,115,22,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Логин</label>
                     <input type="text" name="username" required autofocus placeholder="Введите логин">
                 </div>
                 <div style="margin-bottom:24px;">
-                    <label style="display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">Пароль</label>
+                    <label style="display:block;font-size:11px;font-weight:700;color:rgba(249,115,22,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Пароль</label>
                     <input type="password" name="password" required placeholder="Введите пароль">
                 </div>
-                <button type="submit" style="width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 0 20px rgba(99,102,241,0.3);">
-                    Войти
+                <button type="submit" style="width:100%;padding:14px;background:linear-gradient(135deg,#f97316,#fbbf24);color:white;border:none;border-radius:50px;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 0 20px rgba(249,115,22,0.35);letter-spacing:0.3px;">
+                    Войти →
                 </button>
             </form>
 
-            <p style="text-align:center;margin-top:20px;font-size:13px;color:rgba(255,255,255,0.3);">
+            <p style="text-align:center;margin-top:20px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.25);">
                 Нет аккаунта?
-                <a href="{% url 'register' %}" style="color:#a5b4fc;text-decoration:none;font-weight:600;">Создать</a>
+                <a href="{% url 'register' %}" style="color:#fb923c;text-decoration:none;font-weight:800;">Создать</a>
             </p>
         </div>
     </div>
