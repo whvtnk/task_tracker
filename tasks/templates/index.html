@@ -1,125 +1,204 @@
 {% extends 'base.html' %}
 {% block content %}
-
 <style>
-    .sd { padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid;cursor:pointer;outline:none; }
-    .sd-completed { background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.25); }
-    .sd-in_progress { background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.25); }
-    .sd-review { background:rgba(245,158,11,0.1);color:#fcd34d;border-color:rgba(245,158,11,0.25); }
-    .sd-overdue { background:rgba(239,68,68,0.1);color:#fca5a5;border-color:rgba(239,68,68,0.25); }
-    .sd-new { background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);border-color:rgba(255,255,255,0.1); }
-    .task-title { font-size:14px;font-weight:500;color:white; }
-    .task-title-done { font-size:14px;font-weight:500;color:rgba(255,255,255,0.25);text-decoration:line-through; }
-    .badge { padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600; }
-    .badge-high { background:rgba(239,68,68,0.1);color:#fca5a5; }
-    .badge-mid { background:rgba(245,158,11,0.1);color:#fcd34d; }
-    .badge-low { background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.4); }
-    .task-row { display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.2s; }
-    .task-row:hover { background:rgba(99,102,241,0.04); }
-    .action-btn { padding:6px;border-radius:8px;color:rgba(255,255,255,0.3);text-decoration:none;display:flex;transition:all 0.2s; }
-    .action-btn:hover { background:rgba(99,102,241,0.15);color:#a5b4fc; }
-    .action-btn.del:hover { background:rgba(239,68,68,0.15);color:#fca5a5; }
+.kanban-col-title.col-title-new { color: var(--text2); }
+.kanban-col-title.col-title-in_progress { color: #93c5fd; }
+.kanban-col-title.col-title-review { color: #fcd34d; }
+.kanban-col-title.col-title-completed { color: #6ee7b7; }
 </style>
 
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
     <div>
-        <h1 style="font-size:22px;font-weight:700;color:white;margin:0 0 4px;">Моя доска</h1>
-        <p style="color:rgba(255,255,255,0.4);font-size:14px;margin:0;">Личные задачи</p>
+        <h1 style="font-size:22px;font-weight:700;color:var(--text);margin:0 0 4px;">Моя доска</h1>
+        <p style="color:var(--text2);font-size:14px;margin:0;">Личные задачи</p>
     </div>
-    <a href="{% url 'create_personal_task' %}" style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:12px;font-size:14px;font-weight:600;text-decoration:none;">
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-        Новая задача
-    </a>
+    <div style="display:flex;gap:10px;align-items:center;">
+        <!-- Переключатель вида -->
+        <div class="view-toggle">
+            <button class="view-btn active" id="btnList" onclick="setView('list')" title="Список">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            <button class="view-btn" id="btnKanban" onclick="setView('kanban')" title="Канбан">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+                </svg>
+            </button>
+        </div>
+        <a href="{% url 'create_personal_task' %}" style="display:flex;align-items:center;gap:8px;padding:9px 18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Новая задача
+        </a>
+    </div>
 </div>
 
-<!-- Фильтры -->
-<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:16px 20px;margin-bottom:20px;">
-    <form method="GET" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
-        <div style="display:flex;flex-direction:column;gap:6px;">
-            <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;">Статус</label>
-            <select name="status" style="padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;font-size:13px;outline:none;cursor:pointer;">
-                <option value="" style="background:#1a1a2e;">Все</option>
-                <option value="new" {% if current_status == 'new' %}selected{% endif %} style="background:#1a1a2e;">Новая</option>
-                <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %} style="background:#1a1a2e;">В работе</option>
-                <option value="review" {% if current_status == 'review' %}selected{% endif %} style="background:#1a1a2e;">На проверке</option>
-                <option value="completed" {% if current_status == 'completed' %}selected{% endif %} style="background:#1a1a2e;">Выполнено</option>
-            </select>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-            <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;">Поиск</label>
-            <input type="text" name="q" value="{{ search_q }}" placeholder="Название задачи..."
-                   style="padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;font-size:13px;outline:none;width:200px;">
-        </div>
-        <div style="display:flex;gap:8px;padding-bottom:1px;">
-            <button type="submit" style="padding:9px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Найти</button>
-            <a href="{% url 'task_board' %}" style="padding:9px 16px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border-radius:8px;font-size:13px;text-decoration:none;display:flex;align-items:center;">Сброс</a>
-        </div>
-    </form>
-</div>
+<!-- Живой поиск и фильтры -->
+<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:20px;">
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
 
-<!-- Задачи -->
-<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;">
-    {% if tasks %}
-    {% for task in tasks %}
-    <div class="task-row">
-        <select class="sd sd-{{ task.status }} status-select" data-id="{{ task.id }}">
-            <option value="new" {% if task.status == 'new' %}selected{% endif %} style="background:#1a1a2e;">Новая</option>
-            <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %} style="background:#1a1a2e;">В работе</option>
-            <option value="review" {% if task.status == 'review' %}selected{% endif %} style="background:#1a1a2e;">На проверке</option>
-            <option value="completed" {% if task.status == 'completed' %}selected{% endif %} style="background:#1a1a2e;">Выполнено</option>
-            {% if task.status == 'overdue' %}<option value="overdue" selected disabled style="background:#1a1a2e;">Просрочено</option>{% endif %}
+        <!-- Живой поиск -->
+        <div style="position:relative;flex:1;min-width:180px;">
+            <svg width="15" height="15" fill="none" stroke="var(--text3)" viewBox="0 0 24 24"
+                 style="position:absolute;left:12px;top:50%;transform:translateY(-50%);">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" id="liveSearch" placeholder="Поиск задач..."
+                   oninput="filterTasks()"
+                   style="padding:8px 12px 8px 36px;border-radius:8px;font-size:13px;width:100%;outline:none;">
+        </div>
+
+        <!-- Фильтр статуса -->
+        <select id="filterStatus" onchange="filterTasks()"
+                style="padding:8px 12px;border-radius:8px;font-size:13px;outline:none;cursor:pointer;">
+            <option value="">Все статусы</option>
+            <option value="new">Новая</option>
+            <option value="in_progress">В работе</option>
+            <option value="review">На проверке</option>
+            <option value="completed">Выполнено</option>
+            <option value="overdue">Просрочено</option>
         </select>
 
-        <div style="flex:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            {% if task.status == 'completed' %}
-            <span class="task-title-done">{{ task.title }}</span>
-            {% else %}
-            <span class="task-title">{{ task.title }}</span>
-            {% endif %}
+        <!-- Фильтр приоритета -->
+        <select id="filterPriority" onchange="filterTasks()"
+                style="padding:8px 12px;border-radius:8px;font-size:13px;outline:none;cursor:pointer;">
+            <option value="">Все приоритеты</option>
+            <option value="high">Высокий</option>
+            <option value="mid">Средний</option>
+            <option value="low">Низкий</option>
+        </select>
 
-            {% if task.priority >= 4 %}
-            <span class="badge badge-high">Высокий</span>
-            {% elif task.priority == 3 %}
-            <span class="badge badge-mid">Средний</span>
-            {% else %}
-            <span class="badge badge-low">Низкий</span>
-            {% endif %}
-
-            {% if task.deadline %}
-            <span style="font-size:11px;color:rgba(255,255,255,0.3);">до {{ task.deadline|date:"d.m.Y" }}</span>
-            {% endif %}
-        </div>
-
-        <div style="display:flex;gap:4px;">
-            <a href="{% url 'edit_task' task.id %}" class="action-btn">
-                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
-            </a>
-            <a href="{% url 'delete_task' task.id %}" class="action-btn del" onclick="return confirm('Удалить?');">
-                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-            </a>
-        </div>
+        <button onclick="clearFilters()" style="padding:8px 14px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;">
+            Сброс
+        </button>
     </div>
-    {% endfor %}
-    {% else %}
-    <div style="display:flex;flex-direction:column;align-items:center;padding:72px 20px;text-align:center;">
-        <div style="width:56px;height:56px;background:rgba(99,102,241,0.1);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
-            <svg width="28" height="28" fill="none" stroke="rgba(165,180,252,0.6)" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-        </div>
-        <p style="color:rgba(255,255,255,0.5);font-size:15px;font-weight:600;margin:0 0 4px;">Нет задач</p>
-        <p style="color:rgba(255,255,255,0.25);font-size:13px;margin:0;">Создайте первую личную задачу!</p>
-    </div>
-    {% endif %}
 </div>
 
+<!-- ═══ СПИСОК VIEW ═══ -->
+<div id="listView">
+    <div id="taskList" style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+        {% if tasks %}
+        {% for task in tasks %}
+        <div class="task-card"
+             data-title="{{ task.title|lower }}"
+             data-status="{{ task.status }}"
+             data-priority="{% if task.priority >= 4 %}high{% elif task.priority == 3 %}mid{% else %}low{% endif %}"
+             data-id="{{ task.id }}">
+
+            <select class="sd sd-{{ task.status }} status-select" data-id="{{ task.id }}">
+                <option value="new" {% if task.status == 'new' %}selected{% endif %} style="background:var(--select-bg);">Новая</option>
+                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %} style="background:var(--select-bg);">В работе</option>
+                <option value="review" {% if task.status == 'review' %}selected{% endif %} style="background:var(--select-bg);">На проверке</option>
+                <option value="completed" {% if task.status == 'completed' %}selected{% endif %} style="background:var(--select-bg);">Выполнено</option>
+                {% if task.status == 'overdue' %}<option value="overdue" selected disabled style="background:var(--select-bg);">Просрочено</option>{% endif %}
+            </select>
+
+            <div style="flex:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                {% if task.status == 'completed' %}
+                <span style="font-size:14px;font-weight:500;color:var(--text3);text-decoration:line-through;">{{ task.title }}</span>
+                {% else %}
+                <span style="font-size:14px;font-weight:500;color:var(--text);">{{ task.title }}</span>
+                {% endif %}
+
+                {% if task.priority >= 4 %}
+                <span class="badge badge-high">Высокий</span>
+                {% elif task.priority == 3 %}
+                <span class="badge badge-mid">Средний</span>
+                {% else %}
+                <span class="badge badge-low">Низкий</span>
+                {% endif %}
+
+                {% if task.deadline %}
+                <span style="font-size:11px;color:var(--text3);">до {{ task.deadline|date:"d.m.Y" }}</span>
+                {% endif %}
+            </div>
+
+            <div style="display:flex;gap:4px;">
+                <a href="{% url 'edit_task' task.id %}"
+                   style="padding:6px;border-radius:8px;color:var(--text3);text-decoration:none;display:flex;transition:all 0.2s;"
+                   onmouseover="this.style.background='rgba(99,102,241,0.15)';this.style.color='#a5b4fc'"
+                   onmouseout="this.style.background='transparent';this.style.color='var(--text3)'">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </a>
+                <a href="{% url 'delete_task' task.id %}"
+                   style="padding:6px;border-radius:8px;color:var(--text3);text-decoration:none;display:flex;transition:all 0.2s;"
+                   onmouseover="this.style.background='rgba(239,68,68,0.15)';this.style.color='#fca5a5'"
+                   onmouseout="this.style.background='transparent';this.style.color='var(--text3)'"
+                   onclick="return confirm('Удалить?');">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div id="emptyState" style="display:flex;flex-direction:column;align-items:center;padding:72px 20px;text-align:center;">
+            <div style="width:52px;height:52px;background:rgba(99,102,241,0.1);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+                <svg width="26" height="26" fill="none" stroke="rgba(165,180,252,0.6)" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <p style="color:var(--text2);font-size:15px;font-weight:600;margin:0 0 4px;">Нет задач</p>
+            <p style="color:var(--text3);font-size:13px;margin:0;">Создайте первую!</p>
+        </div>
+        {% endif %}
+
+        <!-- Пустой результат поиска -->
+        <div id="noResults" style="display:none;padding:48px;text-align:center;">
+            <p style="color:var(--text2);font-size:14px;font-weight:600;margin:0 0 4px;">Ничего не найдено</p>
+            <p style="color:var(--text3);font-size:13px;margin:0;">Попробуйте другой запрос</p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ KANBAN VIEW ═══ -->
+<div id="kanbanView" style="display:none;">
+    <div class="kanban-board">
+
+        {% for col_status, col_label, col_color in col_data %}
+        <div class="kanban-col" id="col-{{ col_status }}"
+             ondragover="dragOver(event, '{{ col_status }}')"
+             ondragleave="dragLeave(event)"
+             ondrop="drop(event, '{{ col_status }}')">
+            <div class="kanban-col-header">
+                <span class="kanban-col-title col-title-{{ col_status }}">{{ col_label }}</span>
+                <span class="kanban-count" id="count-{{ col_status }}">0</span>
+            </div>
+            <div id="tasks-{{ col_status }}">
+                <!-- заполняется JS -->
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+
+<script id="tasks-data" type="application/json">
+[
+    {% for task in tasks %}
+    {
+        "id": {{ task.id }},
+        "title": "{{ task.title|escapejs }}",
+        "status": "{{ task.status }}",
+        "priority": {{ task.priority }},
+        "deadline": "{% if task.deadline %}{{ task.deadline|date:'d.m.Y' }}{% endif %}",
+        "editUrl": "{% url 'edit_task' task.id %}",
+        "deleteUrl": "{% url 'delete_task' task.id %}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
+
 <script>
+// ── Данные задач из Django ──
+const allTasks = JSON.parse(document.getElementById('tasks-data').textContent || '[]');
+
+// ── CSRF ──
 function getCookie(name) {
     let v = null;
     if (document.cookie) document.cookie.split(';').forEach(c => {
@@ -128,14 +207,190 @@ function getCookie(name) {
     });
     return v;
 }
+
+// ── Смена статуса через API ──
+function changeStatus(taskId, newStatus) {
+    fetch(`/api/tasks/${taskId}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ status: newStatus })
+    }).then(r => { if (!r.ok) window.location.reload(); });
+}
+
+// Слушаем dropdown в списке
 document.querySelectorAll('.status-select').forEach(sel => {
     sel.addEventListener('change', function() {
-        fetch(`/api/tasks/${this.dataset.id}/`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-            body: JSON.stringify({ status: this.value })
-        }).then(() => window.location.reload());
+        changeStatus(this.dataset.id, this.value);
+        window.location.reload();
     });
 });
+
+// ── Переключение вид ──
+function setView(v) {
+    const list = document.getElementById('listView');
+    const kanban = document.getElementById('kanbanView');
+    const btnL = document.getElementById('btnList');
+    const btnK = document.getElementById('btnKanban');
+    if (v === 'kanban') {
+        list.style.display = 'none';
+        kanban.style.display = 'block';
+        btnK.classList.add('active'); btnL.classList.remove('active');
+        buildKanban();
+    } else {
+        kanban.style.display = 'none';
+        list.style.display = 'block';
+        btnL.classList.add('active'); btnK.classList.remove('active');
+    }
+    localStorage.setItem('taskView', v);
+}
+
+// ── Живой поиск + фильтры ──
+function filterTasks() {
+    const q = document.getElementById('liveSearch').value.toLowerCase();
+    const status = document.getElementById('filterStatus').value;
+    const priority = document.getElementById('filterPriority').value;
+    const cards = document.querySelectorAll('#taskList .task-card');
+    let visible = 0;
+
+    cards.forEach(card => {
+        const matchTitle = card.dataset.title.includes(q);
+        const matchStatus = !status || card.dataset.status === status;
+        const matchPriority = !priority || card.dataset.priority === priority;
+        const show = matchTitle && matchStatus && matchPriority;
+        card.style.display = show ? 'flex' : 'none';
+        if (show) visible++;
+    });
+
+    document.getElementById('noResults').style.display = visible === 0 && cards.length > 0 ? 'block' : 'none';
+}
+
+function clearFilters() {
+    document.getElementById('liveSearch').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterPriority').value = '';
+    filterTasks();
+}
+
+// ── Kanban ──
+const colConfig = {
+    'new':         { label: 'Новая',       color: 'var(--text2)' },
+    'in_progress': { label: 'В работе',    color: '#93c5fd' },
+    'review':      { label: 'На проверке', color: '#fcd34d' },
+    'completed':   { label: 'Выполнено',   color: '#6ee7b7' },
+};
+
+function priorityLabel(p) {
+    if (p >= 4) return '<span class="badge badge-high">Высокий</span>';
+    if (p === 3) return '<span class="badge badge-mid">Средний</span>';
+    return '<span class="badge badge-low">Низкий</span>';
+}
+
+function buildKanban() {
+    // Очистить колонки
+    Object.keys(colConfig).forEach(s => {
+        const col = document.getElementById('tasks-' + s);
+        if (col) col.innerHTML = '';
+        const cnt = document.getElementById('count-' + s);
+        if (cnt) cnt.textContent = '0';
+    });
+
+    // Расставить задачи
+    allTasks.forEach(task => {
+        const col = document.getElementById('tasks-' + task.status);
+        if (!col) return;
+
+        const div = document.createElement('div');
+        div.className = 'kanban-task';
+        div.draggable = true;
+        div.dataset.id = task.id;
+        div.dataset.status = task.status;
+
+        div.innerHTML = `
+            <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:8px;${task.status==='completed'?'text-decoration:line-through;color:var(--text3);':''}">${task.title}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                <div style="display:flex;gap:6px;align-items:center;">
+                    ${priorityLabel(task.priority)}
+                    ${task.deadline ? `<span style="font-size:10px;color:var(--text3);">до ${task.deadline}</span>` : ''}
+                </div>
+                <div style="display:flex;gap:2px;">
+                    <a href="${task.editUrl}" style="padding:4px;border-radius:6px;color:var(--text3);display:flex;transition:all 0.2s;"
+                       onmouseover="this.style.color='#a5b4fc'" onmouseout="this.style.color='var(--text3)'">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                    </a>
+                    <a href="${task.deleteUrl}" onclick="return confirm('Удалить?');"
+                       style="padding:4px;border-radius:6px;color:var(--text3);display:flex;transition:all 0.2s;"
+                       onmouseover="this.style.color='#fca5a5'" onmouseout="this.style.color='var(--text3)'">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        `;
+
+        // Drag events
+        div.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('taskId', task.id);
+            e.dataTransfer.setData('taskStatus', task.status);
+            div.classList.add('dragging');
+        });
+        div.addEventListener('dragend', () => div.classList.remove('dragging'));
+
+        col.appendChild(div);
+
+        // Счётчик
+        const cnt = document.getElementById('count-' + task.status);
+        if (cnt) cnt.textContent = parseInt(cnt.textContent || '0') + 1;
+    });
+}
+
+// Drag & drop колонки
+let dragOverCol = null;
+
+function dragOver(e, status) {
+    e.preventDefault();
+    const col = document.getElementById('col-' + status);
+    if (dragOverCol !== col) {
+        if (dragOverCol) dragOverCol.classList.remove('drag-over');
+        dragOverCol = col;
+        col.classList.add('drag-over');
+    }
+}
+
+function dragLeave(e) {
+    if (dragOverCol && !dragOverCol.contains(e.relatedTarget)) {
+        dragOverCol.classList.remove('drag-over');
+        dragOverCol = null;
+    }
+}
+
+function drop(e, newStatus) {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('taskId');
+    const oldStatus = e.dataTransfer.getData('taskStatus');
+    if (dragOverCol) { dragOverCol.classList.remove('drag-over'); dragOverCol = null; }
+
+    if (oldStatus === newStatus) return;
+
+    // Обновляем в массиве
+    const task = allTasks.find(t => t.id == taskId);
+    if (task) task.status = newStatus;
+
+    // Сохраняем в БД
+    changeStatus(taskId, newStatus);
+
+    // Перерисовываем канбан
+    buildKanban();
+}
+
+// ── Инициализация ──
+const savedView = localStorage.getItem('taskView') || 'list';
+setView(savedView);
+
+// Восстановить тему
+const savedTheme = localStorage.getItem('theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
 </script>
 {% endblock %}

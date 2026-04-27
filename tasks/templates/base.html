@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,36 +7,155 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'Inter', sans-serif; }
-        body { background: #0a0a0f; }
+        * { font-family: 'Inter', sans-serif; transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
+
+        /* ── Тёмная тема ── */
+        [data-theme="dark"] {
+            --bg: #0a0a0f;
+            --bg2: rgba(255,255,255,0.02);
+            --bg3: rgba(255,255,255,0.05);
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.12);
+            --text: #ffffff;
+            --text2: rgba(255,255,255,0.5);
+            --text3: rgba(255,255,255,0.25);
+            --nav-bg: rgba(255,255,255,0.03);
+            --card-bg: rgba(255,255,255,0.02);
+            --hover: rgba(99,102,241,0.06);
+            --glow: rgba(99,102,241,0.12);
+            --input-bg: rgba(255,255,255,0.05);
+            --select-bg: #1a1a2e;
+        }
+
+        /* ── Светлая тема ── */
+        [data-theme="light"] {
+            --bg: #f5f5f7;
+            --bg2: #ffffff;
+            --bg3: #f0f0f5;
+            --border: rgba(0,0,0,0.08);
+            --border2: rgba(0,0,0,0.15);
+            --text: #111111;
+            --text2: rgba(0,0,0,0.5);
+            --text3: rgba(0,0,0,0.3);
+            --nav-bg: rgba(255,255,255,0.85);
+            --card-bg: #ffffff;
+            --hover: rgba(99,102,241,0.04);
+            --glow: rgba(99,102,241,0.08);
+            --input-bg: #ffffff;
+            --select-bg: #ffffff;
+        }
+
+        body { background: var(--bg); color: var(--text); min-height: 100vh; margin: 0; }
+
         .cursor-glow {
             pointer-events: none; position: fixed;
             width: 600px; height: 600px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
+            background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
             transform: translate(-50%, -50%);
             transition: left 0.1s ease, top 0.1s ease; z-index: 0;
         }
+
         .glass-nav {
-            background: rgba(255,255,255,0.03);
+            background: var(--nav-bg);
             backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 1px solid var(--border);
         }
+
         .nav-link {
-            padding: 8px 14px; border-radius: 8px;
+            padding: 7px 14px; border-radius: 8px;
             font-size: 13px; font-weight: 500;
-            color: rgba(255,255,255,0.5);
-            text-decoration: none; transition: all 0.2s;
+            color: var(--text2); text-decoration: none;
+            transition: all 0.2s;
         }
-        .nav-link:hover { background: rgba(255,255,255,0.06); color: white; }
+        .nav-link:hover { background: var(--bg3); color: var(--text); }
         .nav-link.active { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+
+        /* Кнопка темы */
+        .theme-btn {
+            width: 36px; height: 36px; border-radius: 8px;
+            background: var(--bg3); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; color: var(--text2);
+        }
+        .theme-btn:hover { background: var(--border); color: var(--text); }
+
+        /* Основной контент */
+        main { max-width: 1280px; margin: 0 auto; padding: 32px 24px; position: relative; z-index: 10; }
+
+        /* Карточки задач */
+        .task-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px 18px;
+            display: flex; align-items: center; gap: 14px;
+            transition: all 0.2s; margin-bottom: 8px;
+            cursor: default;
+        }
+        .task-card:hover { background: var(--hover); border-color: var(--border2); transform: translateY(-1px); }
+        .task-card.dragging { opacity: 0.5; transform: scale(0.98); }
+
+        /* Kanban колонки */
+        .kanban-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .kanban-col {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 16px;
+            min-height: 200px;
+        }
+        .kanban-col.drag-over { border-color: #6366f1; background: rgba(99,102,241,0.05); }
+        .kanban-col-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .kanban-col-title { font-size: 13px; font-weight: 600; }
+        .kanban-count { font-size: 12px; color: var(--text2); background: var(--bg3); padding: 2px 8px; border-radius: 20px; }
+        .kanban-task {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px 14px;
+            margin-bottom: 8px; cursor: grab;
+            transition: all 0.2s;
+        }
+        .kanban-task:hover { border-color: var(--border2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+        .kanban-task:active { cursor: grabbing; }
+        .kanban-task.dragging { opacity: 0.4; }
+
+        /* Бейджи */
+        .badge { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+        .badge-high { background: rgba(239,68,68,0.1); color: #fca5a5; }
+        .badge-mid { background: rgba(245,158,11,0.1); color: #fcd34d; }
+        .badge-low { background: rgba(255,255,255,0.05); color: var(--text2); }
+
+        [data-theme="light"] .badge-low { background: rgba(0,0,0,0.05); }
+
+        /* Статус бейджи */
+        .sd { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid; cursor: pointer; outline: none; }
+        .sd-new { background: rgba(255,255,255,0.05); color: var(--text2); border-color: var(--border); }
+        .sd-in_progress { background: rgba(59,130,246,0.1); color: #93c5fd; border-color: rgba(59,130,246,0.25); }
+        .sd-review { background: rgba(245,158,11,0.1); color: #fcd34d; border-color: rgba(245,158,11,0.25); }
+        .sd-completed { background: rgba(16,185,129,0.1); color: #6ee7b7; border-color: rgba(16,185,129,0.25); }
+        .sd-overdue { background: rgba(239,68,68,0.1); color: #fca5a5; border-color: rgba(239,68,68,0.25); }
+
+        [data-theme="light"] .sd-new { background: #f0f0f5; color: #666; border-color: #ddd; }
+
+        /* Переключатель вид */
+        .view-toggle { display: flex; gap: 4px; background: var(--bg3); padding: 3px; border-radius: 8px; border: 1px solid var(--border); }
+        .view-btn { padding: 5px 10px; border-radius: 6px; border: none; background: transparent; color: var(--text2); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; }
+        .view-btn.active { background: var(--card-bg); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .view-btn:hover:not(.active) { color: var(--text); }
+
+        /* Форма и инпуты */
+        input, select {
+            background: var(--input-bg) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text) !important;
+        }
+        input:focus, select:focus { border-color: rgba(99,102,241,0.5) !important; }
+        select option { background: var(--select-bg); color: var(--text); }
     </style>
 </head>
-<body class="min-h-screen text-slate-100 relative overflow-x-hidden">
-
+<body>
 <div class="cursor-glow" id="cursorGlow"></div>
 
 <nav class="glass-nav sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
+    <div style="max-width:1280px;margin:0 auto;padding:12px 24px;display:flex;justify-content:space-between;align-items:center;">
 
         <a href="{% url 'task_board' %}" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
             <div style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;">
@@ -44,7 +163,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
-            <span style="font-size:16px;font-weight:700;background:linear-gradient(135deg,#a5b4fc,#c4b5fd);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Task Tracker</span>
+            <span style="font-size:16px;font-weight:700;background:linear-gradient(135deg,#a5b4fc,#c4b5fd);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">Task Tracker</span>
         </a>
 
         <div style="display:flex;align-items:center;gap:4px;">
@@ -60,8 +179,19 @@
                 <a href="{% url 'assigned_tasks' %}" class="nav-link {% if page == 'assigned' %}active{% endif %}">Назначено мне</a>
             {% endif %}
 
-            <div style="display:flex;align-items:center;gap:8px;margin-left:8px;padding:6px 12px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:24px;">
-                <div style="width:24px;height:24px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;">
+            <!-- Кнопка темы -->
+            <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Сменить тему">
+                <svg id="moonIcon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+                <svg id="sunIcon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+            </button>
+
+            <!-- Аватар -->
+            <div style="display:flex;align-items:center;gap:8px;margin-left:4px;padding:6px 12px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:24px;">
+                <div style="width:22px;height:22px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;">
                     {{ request.user.username|first|upper }}
                 </div>
                 <span style="font-size:13px;font-weight:600;color:#a5b4fc;">{{ request.user.username }}</span>
@@ -72,7 +202,7 @@
                 {% endif %}
             </div>
 
-            <a href="{% url 'logout' %}" class="nav-link" style="margin-left:4px;">
+            <a href="{% url 'logout' %}" class="nav-link" style="margin-left:4px;" title="Выйти">
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                 </svg>
@@ -81,16 +211,35 @@
     </div>
 </nav>
 
-<main class="max-w-7xl mx-auto px-6 py-8 relative z-10">
+<main>
     {% block content %}{% endblock %}
 </main>
 
 <script>
+    // Курсор
     const glow = document.getElementById('cursorGlow');
     document.addEventListener('mousemove', e => {
         glow.style.left = e.clientX + 'px';
         glow.style.top = e.clientY + 'px';
     });
+
+    // Тема
+    function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        document.getElementById('moonIcon').style.display = isDark ? 'none' : 'block';
+        document.getElementById('sunIcon').style.display = isDark ? 'block' : 'none';
+    }
+
+    // Восстановить тему
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    if (saved === 'light') {
+        document.getElementById('moonIcon').style.display = 'none';
+        document.getElementById('sunIcon').style.display = 'block';
+    }
 </script>
 </body>
 </html>

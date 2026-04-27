@@ -191,6 +191,12 @@ def task_board(request):
         'current_sort': sort_by,
         'search_q': search_q,
         'page': 'board',
+        'col_data': [
+        ('new', 'Новая', 'var(--text2)'),
+        ('in_progress', 'В работе', '#93c5fd'),
+        ('review', 'На проверке', '#fcd34d'),
+        ('completed', 'Выполнено', '#6ee7b7'),
+    ],
     }
     return render(request, 'index.html', context)
 
