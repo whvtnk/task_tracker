@@ -1,172 +1,224 @@
 {% extends 'base.html' %}
+
+{% block topbar %}
+<div class="topbar">
+    <div class="topbar-title">◈ Мои задачи</div>
+    <div class="topbar-actions">
+        {% if request.user.is_superuser %}
+        <a href="{% url 'create_task' %}" class="btn-primary">＋ Новая задача</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
 {% block content %}
-
 <style>
-    .status-select {
-        padding: 6px 12px;
-        border-radius: 50px;
-        font-size: 12px;
-        font-weight: 700;
-        border: 1px solid;
-        cursor: pointer;
-        outline: none;
-        background: rgba(255,255,255,0.05);
-        color: rgba(255,255,255,0.4);
-        border-color: rgba(255,255,255,0.1);
+    .filters-row {
+        display: flex; flex-wrap: wrap; gap: 10px;
+        align-items: flex-end; margin-bottom: 24px;
+        background: white;
+        border: 1px solid rgba(249,115,22,0.12);
+        border-radius: 14px; padding: 16px 20px;
     }
-    .status-completed { background: rgba(16,185,129,0.1) !important; color: #6ee7b7 !important; border-color: rgba(16,185,129,0.3) !important; }
-    .status-in_progress { background: rgba(249,115,22,0.1) !important; color: #fb923c !important; border-color: rgba(249,115,22,0.3) !important; }
-    .status-review { background: rgba(251,113,133,0.1) !important; color: #fb7185 !important; border-color: rgba(251,113,133,0.3) !important; }
-    .status-overdue { background: rgba(239,68,68,0.1) !important; color: #fca5a5 !important; border-color: rgba(239,68,68,0.3) !important; }
+    .filter-group { display: flex; flex-direction: column; gap: 5px; }
+    .filter-label { font-size: 10px; font-weight: 700; color: #c2410c; text-transform: uppercase; letter-spacing: 0.8px; }
+    .filter-select {
+        padding: 7px 14px;
+        background: #fff7ed;
+        border: 1px solid rgba(249,115,22,0.2);
+        border-radius: 8px; color: #78350f;
+        font-size: 12px; font-weight: 600;
+        outline: none; cursor: pointer;
+        font-family: 'Nunito', sans-serif;
+    }
 
-    .task-title { font-size: 14px; font-weight: 700; color: white; }
-    .task-title-done { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.2); text-decoration: line-through; }
+    /* Карточки задач */
+    .tasks-grid { display: flex; flex-direction: column; gap: 10px; }
 
-    .priority-badge { padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 700; border: 1px solid; }
-    .priority-high { background: rgba(251,113,133,0.1); color: #fb7185; border-color: rgba(251,113,133,0.25); }
-    .priority-mid { background: rgba(249,115,22,0.1); color: #fb923c; border-color: rgba(249,115,22,0.25); }
-    .priority-low { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.35); border-color: rgba(255,255,255,0.08); }
+    .task-card {
+        background: white;
+        border: 1px solid rgba(249,115,22,0.1);
+        border-radius: 14px;
+        padding: 14px 18px;
+        display: flex; align-items: center; gap: 14px;
+        transition: all 0.2s;
+        border-left: 4px solid transparent;
+    }
+    .task-card:hover { border-color: rgba(249,115,22,0.2); box-shadow: 0 4px 16px rgba(249,115,22,0.08); transform: translateY(-1px); }
+
+    .border-done { border-left-color: #10b981; }
+    .border-progress { border-left-color: #f97316; }
+    .border-review { border-left-color: #ec4899; }
+    .border-overdue { border-left-color: #ef4444; }
+    .border-new { border-left-color: #d1d5db; }
+
+    .status-dot {
+        width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .dot-done { background: #10b981; }
+    .dot-progress { background: #f97316; }
+    .dot-review { background: #ec4899; }
+    .dot-overdue { background: #ef4444; }
+    .dot-new { background: #d1d5db; }
+
+    .status-dropdown {
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 11px; font-weight: 700;
+        border: 1px solid;
+        cursor: pointer; outline: none;
+        font-family: 'Nunito', sans-serif;
+    }
+    .sd-done { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+    .sd-progress { background: #fff7ed; color: #9a3412; border-color: #fed7aa; }
+    .sd-review { background: #fdf2f8; color: #9d174d; border-color: #fbcfe8; }
+    .sd-overdue { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+    .sd-new { background: #f9fafb; color: #374151; border-color: #e5e7eb; }
+
+    .task-name { font-size: 14px; font-weight: 700; color: #1a0e06; flex: 1; }
+    .task-name-done { text-decoration: line-through; color: #9ca3af; }
+
+    .stars { color: #f97316; font-size: 12px; letter-spacing: -1px; }
+    .stars-gray { color: #d1d5db; }
+
+    .tag {
+        padding: 3px 10px; border-radius: 6px;
+        font-size: 11px; font-weight: 600;
+    }
+    .tag-date { background: #fff7ed; color: #c2410c; }
+    .tag-user { background: #fff7ed; color: #92400e; }
+
+    .action-btn {
+        padding: 6px 12px; border-radius: 8px;
+        font-size: 11px; font-weight: 700;
+        text-decoration: none; transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+    .action-edit { color: #9a3412; border-color: #fed7aa; background: #fff7ed; }
+    .action-edit:hover { background: #ffedd5; }
+    .action-del { color: #991b1b; border-color: #fecaca; background: #fef2f2; }
+    .action-del:hover { background: #fee2e2; }
+
+    .empty-state {
+        text-align: center; padding: 80px 20px;
+        background: white; border-radius: 16px;
+        border: 1px dashed rgba(249,115,22,0.2);
+    }
 </style>
 
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
-    <div>
-        <h1 style="font-size:26px;font-weight:800;color:white;margin:0 0 4px;">Мои задачи ✨</h1>
-        <p style="color:rgba(255,255,255,0.35);font-size:14px;margin:0;">Всё под контролем 🧡</p>
-    </div>
-    {% if request.user.is_superuser %}
-    <a href="{% url 'create_task' %}" style="display:flex;align-items:center;gap:8px;padding:11px 22px;background:linear-gradient(135deg,#f97316,#fbbf24);color:white;border-radius:50px;font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 0 20px rgba(249,115,22,0.35);"
-       onmouseover="this.style.boxShadow='0 0 32px rgba(249,115,22,0.6)';this.style.transform='translateY(-1px)'"
-       onmouseout="this.style.boxShadow='0 0 20px rgba(249,115,22,0.35)';this.style.transform='translateY(0)'">
-        ＋ Создать задачу
-    </a>
-    {% endif %}
-</div>
-
 <!-- Фильтры -->
-<div style="background:rgba(249,115,22,0.04);border:1px solid rgba(249,115,22,0.1);border-radius:20px;padding:20px 24px;margin-bottom:24px;">
-    <form method="GET" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
-        <div style="display:flex;flex-direction:column;gap:6px;">
-            <label style="font-size:11px;font-weight:700;color:rgba(249,115,22,0.6);text-transform:uppercase;letter-spacing:1px;">Статус</label>
-            <select name="status" style="padding:9px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(249,115,22,0.15);border-radius:50px;color:white;font-size:13px;font-weight:600;outline:none;cursor:pointer;">
-                <option value="" style="background:#1a0e06;">Все статусы</option>
-                <option value="new" {% if current_status == 'new' %}selected{% endif %} style="background:#1a0e06;">New</option>
-                <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %} style="background:#1a0e06;">In Progress</option>
-                <option value="review" {% if current_status == 'review' %}selected{% endif %} style="background:#1a0e06;">Review</option>
-                <option value="completed" {% if current_status == 'completed' %}selected{% endif %} style="background:#1a0e06;">Completed</option>
-                <option value="overdue" {% if current_status == 'overdue' %}selected{% endif %} style="background:#1a0e06;">Overdue</option>
-            </select>
-        </div>
-
-        {% if request.user.is_superuser %}
-        <div style="display:flex;flex-direction:column;gap:6px;">
-            <label style="font-size:11px;font-weight:700;color:rgba(249,115,22,0.6);text-transform:uppercase;letter-spacing:1px;">Сотрудник</label>
-            <select name="assignee" style="padding:9px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(249,115,22,0.15);border-radius:50px;color:white;font-size:13px;font-weight:600;outline:none;cursor:pointer;">
-                <option value="" style="background:#1a0e06;">Все сотрудники</option>
-                {% for u in users %}
-                <option value="{{ u.id }}" {% if current_assignee == u.id|stringformat:"s" %}selected{% endif %} style="background:#1a0e06;">{{ u.username }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        {% endif %}
-
-        <div style="display:flex;flex-direction:column;gap:6px;">
-            <label style="font-size:11px;font-weight:700;color:rgba(249,115,22,0.6);text-transform:uppercase;letter-spacing:1px;">Сортировка</label>
-            <select name="sort" style="padding:9px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(249,115,22,0.15);border-radius:50px;color:white;font-size:13px;font-weight:600;outline:none;cursor:pointer;">
-                <option value="" style="background:#1a0e06;">Без сортировки</option>
-                <option value="deadline_asc" {% if current_sort == 'deadline_asc' %}selected{% endif %} style="background:#1a0e06;">📅 По дедлайну</option>
-                <option value="priority_desc" {% if current_sort == 'priority_desc' %}selected{% endif %} style="background:#1a0e06;">🔥 По приоритету</option>
-            </select>
-        </div>
-
-        <div style="display:flex;gap:8px;">
-            <button type="submit" style="padding:9px 22px;background:linear-gradient(135deg,#f97316,#fbbf24);color:white;border:none;border-radius:50px;font-size:13px;font-weight:700;cursor:pointer;">
-                Применить
-            </button>
-            <a href="{% url 'task_board' %}" style="padding:9px 18px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);border-radius:50px;font-size:13px;font-weight:600;text-decoration:none;display:flex;align-items:center;border:1px solid rgba(255,255,255,0.08);">
-                Сбросить
-            </a>
-        </div>
-    </form>
-</div>
-
-<!-- Список задач -->
-<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(249,115,22,0.08);border-radius:20px;overflow:hidden;">
-    {% if tasks %}
-    {% for task in tasks %}
-    <div style="display:flex;align-items:center;gap:16px;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.2s;"
-         onmouseover="this.style.background='rgba(249,115,22,0.04)'"
-         onmouseout="this.style.background='transparent'">
-
-        <!-- Статус select -->
-        <select class="status-select status-{{ task.status }}" data-id="{{ task.id }}">
-            <option value="new" {% if task.status == 'new' %}selected{% endif %} style="background:#1a0e06;">New</option>
-            <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %} style="background:#1a0e06;">In Progress</option>
-            <option value="review" {% if task.status == 'review' %}selected{% endif %} style="background:#1a0e06;">Review</option>
-            <option value="completed" {% if task.status == 'completed' %}selected{% endif %} style="background:#1a0e06;">Completed</option>
-            {% if task.status == 'overdue' %}
-            <option value="overdue" selected disabled style="background:#1a0e06;">Overdue ⚠️</option>
-            {% endif %}
+<form method="GET" class="filters-row">
+    <div class="filter-group">
+        <label class="filter-label">Статус</label>
+        <select name="status" class="filter-select">
+            <option value="">Все статусы</option>
+            <option value="new" {% if current_status == 'new' %}selected{% endif %}>Новые</option>
+            <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %}>В работе</option>
+            <option value="review" {% if current_status == 'review' %}selected{% endif %}>На проверке</option>
+            <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Готово</option>
+            <option value="overdue" {% if current_status == 'overdue' %}selected{% endif %}>Просрочено</option>
         </select>
-
-        <!-- Инфо о задаче -->
-        <div style="flex:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-
-            {% if task.status == 'completed' %}
-            <span class="task-title-done">{{ task.title }}</span>
-            {% else %}
-            <span class="task-title">{{ task.title }}</span>
-            {% endif %}
-
-            {% if task.priority >= 4 %}
-            <span class="priority-badge priority-high">🔥 P{{ task.priority }}</span>
-            {% elif task.priority == 3 %}
-            <span class="priority-badge priority-mid">⚡ P{{ task.priority }}</span>
-            {% else %}
-            <span class="priority-badge priority-low">📌 P{{ task.priority }}</span>
-            {% endif %}
-
-            {% if task.deadline %}
-            <span style="padding:3px 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:50px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.35);">
-                📅 {{ task.deadline|date:"d.m.Y H:i" }}
-            </span>
-            {% endif %}
-
-            {% if request.user.is_superuser %}
-            <span style="padding:3px 10px;background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.15);border-radius:50px;font-size:11px;font-weight:600;color:rgba(251,146,60,0.7);">
-                👤 {% if task.assignee %}{{ task.assignee.username }}{% else %}Без исполнителя{% endif %}
-            </span>
-            {% endif %}
-        </div>
-
-        <!-- Кнопки -->
-        {% if request.user.is_superuser %}
-        <div style="display:flex;gap:6px;">
-            <a href="{% url 'edit_task' task.id %}"
-               style="padding:8px 14px;border-radius:50px;color:rgba(255,255,255,0.3);text-decoration:none;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,0.07);transition:all 0.2s;display:flex;align-items:center;gap:4px;"
-               onmouseover="this.style.background='rgba(249,115,22,0.1)';this.style.color='#fb923c';this.style.borderColor='rgba(249,115,22,0.3)'"
-               onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.3)';this.style.borderColor='rgba(255,255,255,0.07)'">
-                ✏️ Изменить
-            </a>
-            <a href="{% url 'delete_task' task.id %}"
-               style="padding:8px 14px;border-radius:50px;color:rgba(255,255,255,0.3);text-decoration:none;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,0.07);transition:all 0.2s;display:flex;align-items:center;gap:4px;"
-               onmouseover="this.style.background='rgba(251,113,133,0.1)';this.style.color='#fb7185';this.style.borderColor='rgba(251,113,133,0.3)'"
-               onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.3)';this.style.borderColor='rgba(255,255,255,0.07)'"
-               onclick="return confirm('Удалить задачу?');">
-                🗑️ Удалить
-            </a>
-        </div>
-        {% endif %}
-
     </div>
-    {% endfor %}
 
-    {% else %}
-    <div style="display:flex;flex-direction:column;align-items:center;padding:80px 20px;text-align:center;">
-        <div style="font-size:48px;margin-bottom:12px;">🎉</div>
-        <p style="color:rgba(255,255,255,0.5);font-size:16px;font-weight:700;margin:0 0 4px;">Все задачи выполнены!</p>
-        <p style="color:rgba(255,255,255,0.25);font-size:13px;margin:0;">Так держать! 🧡</p>
+    {% if request.user.is_superuser %}
+    <div class="filter-group">
+        <label class="filter-label">Исполнитель</label>
+        <select name="assignee" class="filter-select">
+            <option value="">Все</option>
+            {% for u in users %}
+            <option value="{{ u.id }}" {% if current_assignee == u.id|stringformat:"s" %}selected{% endif %}>{{ u.username }}</option>
+            {% endfor %}
+        </select>
     </div>
     {% endif %}
+
+    <div class="filter-group">
+        <label class="filter-label">Порядок</label>
+        <select name="sort" class="filter-select">
+            <option value="">По умолчанию</option>
+            <option value="deadline_asc" {% if current_sort == 'deadline_asc' %}selected{% endif %}>По сроку</option>
+            <option value="priority_desc" {% if current_sort == 'priority_desc' %}selected{% endif %}>По важности</option>
+        </select>
+    </div>
+
+    <div style="display:flex;gap:8px;padding-bottom:1px;">
+        <button type="submit" class="btn-primary" style="padding:8px 18px;">Найти</button>
+        <a href="{% url 'task_board' %}" class="btn-secondary">Сброс</a>
+    </div>
+</form>
+
+<!-- Задачи -->
+<div class="tasks-grid">
+{% if tasks %}
+{% for task in tasks %}
+
+{% if task.status == 'completed' %}
+{% with border_cls="border-done" dot_cls="dot-done" sd_cls="sd-done" %}
+{% elif task.status == 'in_progress' %}
+{% with border_cls="border-progress" dot_cls="dot-progress" sd_cls="sd-progress" %}
+{% elif task.status == 'review' %}
+{% with border_cls="border-review" dot_cls="dot-review" sd_cls="sd-review" %}
+{% elif task.status == 'overdue' %}
+{% with border_cls="border-overdue" dot_cls="dot-overdue" sd_cls="sd-overdue" %}
+{% else %}
+{% with border_cls="border-new" dot_cls="dot-new" sd_cls="sd-new" %}
+{% endif %}
+
+<div class="task-card {{ border_cls }}">
+
+    <!-- Статус -->
+    <select class="status-dropdown status-select {{ sd_cls }}" data-id="{{ task.id }}">
+        <option value="new" {% if task.status == 'new' %}selected{% endif %}>Новая</option>
+        <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>В работе</option>
+        <option value="review" {% if task.status == 'review' %}selected{% endif %}>Проверка</option>
+        <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Готово</option>
+        {% if task.status == 'overdue' %}
+        <option value="overdue" selected disabled>Просрочено!</option>
+        {% endif %}
+    </select>
+
+    <!-- Название -->
+    <span class="task-name {% if task.status == 'completed' %}task-name-done{% endif %}">
+        {{ task.title }}
+    </span>
+
+    <!-- Звёзды приоритета -->
+    <span class="stars">
+        {% if task.priority >= 1 %}★{% else %}<span class="stars-gray">★</span>{% endif %}
+        {% if task.priority >= 2 %}★{% else %}<span class="stars-gray">★</span>{% endif %}
+        {% if task.priority >= 3 %}★{% else %}<span class="stars-gray">★</span>{% endif %}
+        {% if task.priority >= 4 %}★{% else %}<span class="stars-gray">★</span>{% endif %}
+        {% if task.priority >= 5 %}★{% else %}<span class="stars-gray">★</span>{% endif %}
+    </span>
+
+    {% if task.deadline %}
+    <span class="tag tag-date">⏰ {{ task.deadline|date:"d.m.Y" }}</span>
+    {% endif %}
+
+    {% if request.user.is_superuser %}
+    <span class="tag tag-user">
+        {% if task.assignee %}{{ task.assignee.username }}{% else %}—{% endif %}
+    </span>
+    {% endif %}
+
+    {% if request.user.is_superuser %}
+    <div style="display:flex;gap:6px;">
+        <a href="{% url 'edit_task' task.id %}" class="action-btn action-edit">Изменить</a>
+        <a href="{% url 'delete_task' task.id %}" class="action-btn action-del"
+           onclick="return confirm('Удалить?');">Удалить</a>
+    </div>
+    {% endif %}
+</div>
+{% endwith %}
+{% endfor %}
+
+{% else %}
+<div class="empty-state">
+    <div style="font-size:40px;margin-bottom:12px;">🎉</div>
+    <p style="font-size:16px;font-weight:700;color:#92400e;margin:0 0 4px;">Задач нет!</p>
+    <p style="font-size:13px;color:#c2410c;margin:0;">Всё выполнено, отлично!</p>
+</div>
+{% endif %}
 </div>
 
 <script>

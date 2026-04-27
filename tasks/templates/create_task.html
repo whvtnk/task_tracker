@@ -1,60 +1,86 @@
 {% extends 'base.html' %}
-{% block content %}
 
-<div style="max-width:560px;margin:0 auto;">
-    <div style="margin-bottom:24px;">
-        <h1 style="font-size:24px;font-weight:800;color:white;margin:0 0 4px;">
-            {% if edit_mode %}✏️ Редактировать{% else %}✨ Новая задача{% endif %}
-        </h1>
-        <p style="color:rgba(255,255,255,0.3);font-size:13px;font-weight:600;margin:0;">
-            {% if edit_mode %}Измените нужные поля{% else %}Заполните форму ниже{% endif %}
-        </p>
-    </div>
-
-    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(249,115,22,0.1);border-radius:24px;padding:32px;">
-        <form method="post">
-            {% csrf_token %}
-            {% for field in form %}
-            <div style="margin-bottom:20px;">
-                <label style="display:block;font-size:11px;font-weight:700;color:rgba(249,115,22,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
-                    {{ field.label }}
-                </label>
-                {{ field }}
-                {% if field.errors %}
-                <p style="color:#fb7185;font-size:12px;font-weight:600;margin:6px 0 0;">{{ field.errors|join:", " }}</p>
-                {% endif %}
-            </div>
-            {% endfor %}
-
-            <div style="display:flex;gap:12px;margin-top:8px;">
-                <button type="submit" style="flex:1;padding:14px;background:linear-gradient(135deg,#f97316,#fbbf24);color:white;border:none;border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 0 20px rgba(249,115,22,0.3);">
-                    {% if edit_mode %}💾 Сохранить{% else %}🚀 Создать задачу{% endif %}
-                </button>
-                <a href="{% url 'task_board' %}" style="padding:14px 20px;background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.4);border-radius:50px;font-size:14px;font-weight:700;text-decoration:none;display:flex;align-items:center;border:1px solid rgba(255,255,255,0.07);">
-                    Отмена
-                </a>
-            </div>
-        </form>
+{% block topbar %}
+<div class="topbar">
+    <div class="topbar-title">{% if edit_mode %}Изменить задачу{% else %}Новая задача{% endif %}</div>
+    <div class="topbar-actions">
+        <a href="{% url 'task_board' %}" class="btn-secondary">← Назад</a>
     </div>
 </div>
+{% endblock %}
 
+{% block content %}
 <style>
-    .form-control, select.form-control, input.form-control, textarea.form-control {
-        background: rgba(255,255,255,0.04) !important;
-        border: 1px solid rgba(249,115,22,0.15) !important;
-        border-radius: 50px !important;
-        padding: 11px 18px !important;
-        color: white !important;
+    .form-wrap {
+        max-width: 580px;
+        background: white;
+        border: 1px solid rgba(249,115,22,0.12);
+        border-radius: 18px;
+        padding: 32px;
+    }
+    .field-label {
+        display: block;
+        font-size: 11px; font-weight: 700;
+        color: #c2410c; text-transform: uppercase;
+        letter-spacing: 0.8px; margin-bottom: 7px;
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-control {
+        width: 100% !important;
+        padding: 11px 16px !important;
+        background: #fff7ed !important;
+        border: 1.5px solid rgba(249,115,22,0.2) !important;
+        border-radius: 10px !important;
+        color: #1a0e06 !important;
         font-size: 14px !important;
         font-weight: 600 !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
         outline: none !important;
+        box-sizing: border-box !important;
         font-family: 'Nunito', sans-serif !important;
         transition: border-color 0.2s !important;
     }
-    textarea.form-control { border-radius: 16px !important; }
-    .form-control:focus { border-color: rgba(249,115,22,0.4) !important; }
-    select.form-control option { background: #1a0e06; color: white; }
+    .form-control:focus { border-color: #f97316 !important; }
+    textarea.form-control { border-radius: 10px !important; }
+    select.form-control option { background: white; }
+
+    .form-actions { display: flex; gap: 12px; margin-top: 8px; }
+    .btn-submit {
+        flex: 1; padding: 13px;
+        background: linear-gradient(135deg,#f97316,#fbbf24);
+        color: white; border: none; border-radius: 10px;
+        font-size: 14px; font-weight: 800; cursor: pointer;
+    }
+    .btn-cancel {
+        padding: 13px 20px;
+        background: #fff7ed;
+        color: #92400e;
+        border: 1px solid rgba(249,115,22,0.2);
+        border-radius: 10px;
+        font-size: 14px; font-weight: 700;
+        text-decoration: none; display: flex; align-items: center;
+    }
+    .field-error { color: #dc2626; font-size: 12px; font-weight: 600; margin-top: 4px; }
 </style>
+
+<div class="form-wrap">
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+            <label class="field-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div class="field-error">{{ field.errors|join:", " }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">
+                {% if edit_mode %}Сохранить{% else %}Создать задачу{% endif %}
+            </button>
+            <a href="{% url 'task_board' %}" class="btn-cancel">Отмена</a>
+        </div>
+    </form>
+</div>
 {% endblock %}
